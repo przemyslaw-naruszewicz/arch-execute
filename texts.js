@@ -6,8 +6,12 @@
 window.TEXTS = {
   page: {
     title: {
-      en: 'ArchExecute — Visualize architecture across space and time',
-      pl: 'ArchExecute — Zobacz architekturę w przestrzeni i czasie',
+      en: 'ArchExecute: Visualize architecture across space and time',
+      pl: 'ArchExecute: zobacz architekturę w przestrzeni i czasie',
+    },
+    description: {
+      en: 'Step through simulations of PHP-FPM workers, database race conditions and PostgreSQL locks, the transactional outbox, event loops, DDD aggregates and sagas.',
+      pl: 'Symulacje krok po kroku: workery PHP-FPM, wyścigi w bazie i blokady w PostgreSQL, transactional outbox, pętle zdarzeń, agregaty DDD i Sagi.',
     },
     skip: { en: 'Skip to learning content', pl: 'Przejdź do treści' },
   },

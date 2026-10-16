@@ -70,10 +70,13 @@ window.studyUI = (() => {
   // A "?" button whose tooltip is the [title, body] pair at this TEXTS path.
   const tipButton = (path) =>
     `<button type="button" class="tip-button" data-tip="${path}" aria-label="${text("moreInfo")}">?</button>`;
-  // Fill every element marked with data-t (plain text) or data-t-html (inline HTML).
+  // Fill every element marked with data-t (plain text), data-t-html (inline HTML) or data-t-content (content attribute).
   function applyTexts() {
     document.querySelectorAll("[data-t]").forEach((el) => {
       el.textContent = texts(el.dataset.t) ?? el.dataset.t;
+    });
+    document.querySelectorAll("[data-t-content]").forEach((el) => {
+      el.content = texts(el.dataset.tContent) ?? el.dataset.tContent;
     });
     document
       .querySelectorAll("[data-t-html]")
