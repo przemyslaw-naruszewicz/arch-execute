@@ -1537,8 +1537,8 @@ window.TEXTS = {
     },
     root: { en: 'Order #42 · aggregate root', pl: 'Order #42 · korzeń agregatu' },
     rootDescription: {
-      en: 'The only entry point for modifications that affect the item-count invariant.',
-      pl: 'Jedyny punkt wejścia do zmian wpływających na limit liczby pozycji.',
+      en: 'Every change inside the aggregate goes through the root. Here it checks the item limit.',
+      pl: 'Każda zmiana wewnątrz agregatu przechodzi przez korzeń. Tutaj korzeń sprawdza limit pozycji.',
     },
     item1: 'OrderItem #1',
     item1Description: { en: 'Committed before both requests', pl: 'Zapisany przed oboma żądaniami' },
@@ -1552,10 +1552,10 @@ window.TEXTS = {
       en: 'Changing the mapped itemCount forces a versioned Order UPDATE. It and the OrderItem insert belong to one transaction; a version conflict rolls both back. Adding only a child in a OneToMany collection does not ensure a root version check.',
       pl: 'Zmiana mapowanego itemCount wymusza UPDATE Order z kontrolą wersji. Ten zapis i INSERT OrderItem należą do jednej transakcji; konflikt wersji wycofuje oba. Samo dodanie dziecka do kolekcji OneToMany nie zapewnia kontroli wersji korzenia.',
     },
-    outsideLeft1: { en: 'PlaceOrder application service', pl: 'Serwis aplikacyjny PlaceOrder' },
+    outsideLeft1: { en: 'AddOrderItem application service', pl: 'Serwis aplikacyjny AddOrderItem' },
     outsideLeft1Desc: {
-      en: 'Loads the Order and calls its domain methods; it is not an aggregate root.',
-      pl: 'Odczytuje Order i wywołuje metody domenowe; sam nie jest korzeniem agregatu.',
+      en: 'Loads Order by OrderId, calls addItem() and sets the transaction boundary.',
+      pl: 'Pobiera Order po OrderId, wywołuje addItem() i wyznacza granicę transakcji.',
     },
     outsideLeft2: { en: 'Order list read model', pl: 'Model odczytu listy zamówień' },
     outsideLeft2Desc: {
@@ -2100,11 +2100,11 @@ window.TEXTS = {
     aggregateRoot: {
       en: [
         'Aggregate root',
-        'The Order entity is the entry point for changing its OrderItem collection. Clients should not bypass it to alter invariant-sensitive children.',
+        'The Order entity is the only entry point to the aggregate. Outside code holds a reference to Order alone and changes OrderItems only through its methods.',
       ],
       pl: [
         'Korzeń agregatu',
-        'Encja Order jest wejściem do zmian kolekcji OrderItem. Kod aplikacyjny nie powinien omijać jej przy zmianach wymagających ochrony reguł.',
+        'Encja Order to jedyne wejście do agregatu. Kod spoza agregatu trzyma referencję tylko do Order i zmienia pozycje OrderItem wyłącznie przez metody Order.',
       ],
     },
     invariant: {

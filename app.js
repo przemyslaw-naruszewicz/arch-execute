@@ -1468,10 +1468,16 @@ $em->wrapInTransaction(function ($tx) : void {
     s = { tick: 0, mode: "failure", timer: null };
   const aggCode = `// Symfony / Doctrine: mapped entity fragments
 use Doctrine\\Common\\Collections\\Collection;
+use Doctrine\\ORM\\EntityManagerInterface;
 use Doctrine\\ORM\\Mapping as ORM;
+use Doctrine\\ORM\\OptimisticLockException;
 
-// Inside Order; IDs and constructor omitted.
+// Inside Order (aggregate root); constructor omitted.
 // The constructor initializes $items with an ArrayCollection.
+
+#[ORM\\Id]
+#[ORM\\Column(type: 'order_id')] // OrderId value object wrapping a UUID
+private OrderId $id;
 
 #[ORM\\Version]
 #[ORM\\Column(type: 'integer')]
@@ -1480,45 +1486,79 @@ private int $version = 1;
 #[ORM\\Column(type: 'integer')]
 private int $itemCount = 0;
 
-#[ORM\\OneToMany(mappedBy: 'order', targetEntity: OrderItem::class)]
+#[ORM\\OneToMany(mappedBy: 'order', targetEntity: OrderItem::class,
+    cascade: ['persist'])]
 private Collection $items;
 
-// $item is a new OrderItem created for this operation.
-public function addItem(OrderItem $item): void
+// The root creates its own OrderItems; callers never hold one.
+// Product is another aggregate, referenced only by its identity.
+public function addItem(ProductId $productId): void
 {
     if ($this->itemCount >= 2) {
         throw new OrderItemLimitReached();
     }
-    $item->setOrder($this);
-    $this->items->add($item);
+    $this->items->add(new OrderItem($this, $productId));
     ++$this->itemCount; // Mapped scalar change schedules Order UPDATE.
 }
 
-// Inside OrderItem: the owning side stores the foreign key.
-#[ORM\\ManyToOne(targetEntity: Order::class, inversedBy: 'items')]
-#[ORM\\JoinColumn(nullable: false)]
-private Order $order;
+// Inside OrderItem (local ID omitted): the owning side stores the FK.
+// No setOrder(): an item cannot be moved to another Order.
+/** @internal Created only by Order::addItem(). */
+public function __construct(
+    #[ORM\\ManyToOne(targetEntity: Order::class, inversedBy: 'items')]
+    #[ORM\\JoinColumn(nullable: false)]
+    private Order $order,
+    #[ORM\\Column(type: 'product_id')]
+    private ProductId $productId,
+) {}
 
-public function setOrder(Order $order): void
+// Domain port: an Order is loaded only by its identity.
+interface OrderRepository
 {
-    $this->order = $order;
+    /** @throws OrderNotFound */
+    public function get(OrderId $id): Order;
 }
 
-// Application service; initial Order #42: itemCount=1, version=5.
-$em->wrapInTransaction(function ($tx): void {
-    $order = $tx->find(Order::class, 42);
-    if (!$order) throw new \\RuntimeException('Missing');
+// Application port: the use case sets the transaction boundary
+// without knowing Doctrine.
+interface TransactionalSession
+{
+    /** @throws ConcurrencyConflict */
+    public function executeAtomically(callable $operation): void;
+}
 
-    $item = new OrderItem();
-    $order->addItem($item);
-    $tx->persist($item);
-    // Automatic flush: insert child + versioned UPDATE of Order.
-    // Both changes COMMIT together, or both roll back.
-});
-// On OptimisticLockException, wrapInTransaction() rolls back
-// and closes the EntityManager. Return a conflict, or use a NEW
-// manager, reload Order and call addItem() again: the limit is rechecked.
-// Every add/remove operation must keep itemCount and items in sync.`;
+// Application service; Order #42 from the animation:
+// itemCount=1, version=5.
+public function __invoke(AddOrderItem $command): void
+{
+    $this->session->executeAtomically(function () use ($command): void {
+        $orderId = OrderId::fromString($command->orderId);
+        $order = $this->orders->get($orderId);
+        $order->addItem(ProductId::fromString($command->productId));
+    });
+}
+
+// Infrastructure adapter: the only place that knows the transaction API.
+// (Messenger's doctrine_transaction middleware is another adapter.)
+final class DoctrineSession implements TransactionalSession
+{
+    public function __construct(private EntityManagerInterface $em) {}
+
+    public function executeAtomically(callable $operation): void
+    {
+        try {
+            // flush() before COMMIT: cascaded INSERT of the item +
+            // versioned UPDATE of Order, or ROLLBACK of both.
+            $this->em->wrapInTransaction($operation);
+        } catch (OptimisticLockException $e) {
+            throw new ConcurrencyConflict(previous: $e);
+        }
+    }
+}
+// After a conflict the EntityManager is closed. Return a conflict,
+// or run the command again with a NEW manager: Order is reloaded
+// and addItem() rechecks the limit.
+// Every add/remove method on Order must keep itemCount and items in sync.`;
   const sagaCode = `// Conceptual Symfony Messenger Saga orchestrator
 // All handler steps must be idempotent.
 handle(OrderPlaced $e):
