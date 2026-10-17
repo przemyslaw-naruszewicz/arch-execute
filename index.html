@@ -27,7 +27,18 @@
 </div>
 <main id="learningContent" tabindex="-1">
 <section class="tab active" id="tab-php">
-<nav class="tab-jumpnav" aria-label="Experiments"><a href="#phpArchitecture" data-t="jump.jumpArchitecture"></a><a href="#phpSimulation" data-t="jump.jumpSimulation"></a><a href="#conceptSection" data-t="jump.jumpCpu"></a></nav>
+<div class="panel lesson-intro">
+<div class="overline" data-t="lessons.common.intro"></div>
+<h2 data-t="lessons.php.title"></h2>
+<div class="lesson-intro-grid">
+<div class="lesson-intro-text">
+<p data-t-html="lessons.php.problem"></p>
+<p class="lesson-plan" data-t-html="lessons.php.plan"></p>
+</div>
+<div class="lesson-terms"><h3 class="lesson-label" data-t="lessons.common.terms"></h3><dl data-lesson-terms="lessons.php.terms"></dl></div>
+</div>
+</div>
+<nav class="tab-jumpnav" aria-label="Experiments"><a href="#phpArchitecture" data-t="jump.jumpArchitecture"></a><a href="#phpSimulation" data-t="jump.jumpSimulation"></a><a href="#conceptSection" data-t="jump.jumpCpu"></a><a href="#linuxSection" data-t="jump.jumpLinux"></a></nav>
 <details class="panel relative primer-panel" id="phpArchitecture" open=""><summary data-t="architecture.architectureSummary"></summary>
 <div class="primer-content"><div class="panel-head"><div><div class="overline" data-t="architecture.firstPrincipleLabel"></div><h2 data-t="architecture.oneSymfonyRequestOnePhp"></h2><p data-t="architecture.firstPrinciple"></p></div><span class="chip" data-t="architecture.executionEnvironmentPhpSyntax"></span></div>
 
@@ -54,7 +65,7 @@
 </div>
 <details class="disclosure symfony-example"><summary data-t="architecture.showTheSymfonyControllerExecuted"></summary>
   <div class="symfony-example-body">
-    <pre><code>// src/Controller/OrderController.php
+    <pre><code data-code="php">// src/Controller/OrderController.php
 #[Route('/api/orders', methods: ['GET'])]
 public function orders(OrderRepository $orders): JsonResponse
 {
@@ -110,10 +121,60 @@ public function orders(OrderRepository $orders): JsonResponse
   <div id="conceptBoard"></div>
   <div class="concept-reality" id="conceptReality"></div>
   <p class="concept-footnote" data-t-html="concept.eachColumnIsALogical"></p>
-  <a class="concept-next-link" href="#raceSection"><span data-t="concept.nextTwoRequestsUpdateThe"></span> <span aria-hidden="true">↗</span></a>
+</div>
+<div class="panel relative" id="linuxSection">
+<div class="panel-head"><div><div class="overline" data-t="linux.overline"></div><h2 data-t="linux.title"></h2><p data-t-html="linux.lead"></p></div><span class="chip" data-t="linux.chip"></span></div>
+<div class="popout-target linux-live" data-popout="linux.title">
+<div class="linux-stepbar"><button class="action" id="htopBack" type="button" data-t="common.back"></button><button class="action" id="htopNext" type="button" data-t="common.next"></button><span class="linux-config" id="htopConfig"></span><div class="time-mark" id="htopTime"></div></div>
+<div class="linux-grid">
+<figure class="term linux-htop"><figcaption class="term-bar" data-t="linux.htopTitle"></figcaption><div class="term-body" id="phpHtop"></div></figure>
+<figure class="term"><figcaption class="term-bar" data-t="linux.statusTitle"></figcaption><div class="term-body" id="phpFpmStatus"></div></figure>
+<ul class="linux-legend" data-lesson-list="linux.legend"></ul>
+</div>
+</div>
+<h3 class="linux-subhead" data-t="linux.commandsTitle"></h3>
+<div class="linux-commands">
+<figure class="term linux-command"><figcaption class="term-bar" data-t="linux.cmdHtop"></figcaption><pre class="term-body">$ htop --tree --filter=php</pre><p data-t-html="linux.cmdHtopNote"></p></figure>
+<figure class="term linux-command"><figcaption class="term-bar" data-t="linux.cmdCores"></figcaption><pre class="term-body">$ nproc
+2</pre><p data-t="linux.cmdCoresNote"></p></figure>
+<figure class="term linux-command"><figcaption class="term-bar" data-t="linux.cmdPs"></figcaption><pre class="term-body">$ ps -eo pid,ppid,user,stat,cmd --forest | grep '[p]hp-fpm'
+    812       1 root     Ss   php-fpm: master process (/etc/php/8.3/fpm/php-fpm.conf)
+    901     812 www-data S     \_ php-fpm: pool www
+    902     812 www-data S     \_ php-fpm: pool www</pre><p data-t="linux.cmdPsNote"></p></figure>
+<figure class="term linux-command"><figcaption class="term-bar" data-t="linux.cmdStrace"></figcaption><pre class="term-body">$ sudo strace -p 901
+strace: Process 901 attached
+poll([{fd=7, events=POLLIN|POLLERR}], 1, -1</pre><p data-t-html="linux.cmdStraceNote"></p></figure>
+<figure class="term linux-command"><figcaption class="term-bar" data-t="linux.cmdStatus"></figcaption><pre class="term-body">; /etc/php/8.3/fpm/pool.d/www.conf
+pm.status_path = /fpm-status
+
+$ sudo systemctl reload php8.3-fpm
+$ curl -s http://127.0.0.1/fpm-status</pre><p data-t-html="linux.cmdStatusNote"></p></figure>
+</div>
+</div>
+<div class="panel lesson-summary">
+<div class="overline" data-t="lessons.common.summary"></div>
+<h2 data-t="lessons.php.summaryTitle"></h2>
+<h3 class="lesson-label" data-t="lessons.common.rules"></h3>
+<ol class="lesson-rules" data-lesson-list="lessons.php.rules"></ol>
+<div class="lesson-tables" data-lesson-table="lessons.php.table"></div>
+<div class="lesson-foot">
+<div><h3 class="lesson-label" data-t="lessons.common.more"></h3><ul class="lesson-links" data-lesson-links="lessons.php.links"></ul></div>
+<a class="lesson-next concept-next-link" href="#tab-locks" data-t="lessons.php.next"></a>
+</div>
 </div>
 </section>
 <section class="tab" id="tab-locks">
+<div class="panel lesson-intro">
+<div class="overline" data-t="lessons.common.intro"></div>
+<h2 data-t="lessons.locks.title"></h2>
+<div class="lesson-intro-grid">
+<div class="lesson-intro-text">
+<p data-t-html="lessons.locks.problem"></p>
+<p class="lesson-plan" data-t-html="lessons.locks.plan"></p>
+</div>
+<div class="lesson-terms"><h3 class="lesson-label" data-t="lessons.common.terms"></h3><dl data-lesson-terms="lessons.locks.terms"></dl></div>
+</div>
+</div>
 <nav class="tab-jumpnav" aria-label="Experiments"><a href="#raceSection" data-t="jump.jumpRace"></a><a href="#implementationSection" data-t="jump.jumpCode"></a><a href="#outboxSection" data-t="jump.jumpOutbox"></a></nav>
 <div class="panel relative" id="raceSection">
 <div class="panel-head"><div><div class="overline" data-t="race.theNextProblem"></div><h2><span data-t="race.twoUsersRaceForOne"></span><button aria-label="Glossary: race" class="tip-button" data-term="race" title="Glossary / Słowniczek" type="button">?</button></h2><p data-t-html="race.raceLead"></p></div><span class="chip" id="raceScope"></span></div>
@@ -126,6 +187,25 @@ public function orders(OrderRepository $orders): JsonResponse
 <div class="disclaimer" id="raceReality"></div>
 </div>
 </details>
+<details class="disclosure"><summary data-t="race.pgSummary"></summary>
+<div class="disclosure-body">
+<p class="disclosure-lead" data-t-html="race.pgLead"></p>
+<figure class="term"><figcaption class="term-bar">psql</figcaption><pre class="term-body">SELECT pid, state, wait_event_type, wait_event,
+       pg_blocking_pids(pid) AS blocked_by,
+       left(query, 40) AS query
+FROM pg_stat_activity
+WHERE backend_type = 'client backend'
+  AND pid &lt;&gt; pg_backend_pid();
+
+ pid  |        state        | wait_event_type |  wait_event   | blocked_by |                  query
+------+---------------------+-----------------+---------------+------------+------------------------------------------
+ 4101 | idle in transaction | Client          | ClientRead    | {}         | SELECT balance, version FROM accounts WH
+ 4102 | active              | Lock            | transactionid | {4101}     | SELECT balance, version FROM accounts WH
+(2 rows)</pre></figure>
+<p class="disclosure-lead" data-t-html="race.pgRead"></p>
+<p class="disclosure-note" data-t-html="race.pgOptimistic"></p>
+</div>
+</details>
 <p class="source" style="margin-top:13px"><a href="#outboxSection" id="raceOutboxLink"></a></p>
 </div>
 <details class="panel relative primer-panel" id="implementationSection"><summary data-t="code.codeSummary"></summary>
@@ -135,6 +215,7 @@ public function orders(OrderRepository $orders): JsonResponse
 <h2 data-t="code.implementTheLockInPostgresql"></h2>
 <p data-t="code.matchEachDatabaseActionOn"></p>
 </div><span class="chip good" data-t="code.executablePatternsExplicitTransactio"></span></div>
+<div class="popout-target" data-popout="code.implementTheLockInPostgresql">
 <div class="code-panel-frame">
 <div class="code-toolbar">
 <div aria-label="Locking strategy" class="code-switch" id="codeStrategy" role="group">
@@ -160,14 +241,39 @@ public function orders(OrderRepository $orders): JsonResponse
 </div>
 </div>
 </div>
+</div>
 <p class="source"><span data-t="code.documentation"></span> <a href="https://www.postgresql.org/docs/current/sql-select.html" rel="noopener" target="_blank">PostgreSQL SELECT / FOR UPDATE ↗</a> · <a href="https://www.doctrine-project.org/projects/doctrine-orm/en/current/reference/transactions-and-concurrency.html" rel="noopener" target="_blank">Doctrine transactions &amp; locking ↗</a></p>
 </div>
 </details>
 
 <div class="panel relative" id="outboxSection">
   <div class="ob-head"><div>
+    <div class="ob-eyebrow" data-t="outbox.whyEyebrow"></div>
+    <h2 data-t="outbox.whyTitle"></h2>
+    <p data-t-html="outbox.whyLead"></p>
+  </div></div>
+  <div class="dual-write">
+    <div class="dw-case dw-bad">
+      <h3 data-t="outbox.dwBadTitle"></h3>
+      <ol>
+        <li class="dw-ok"><span class="dw-mark" aria-hidden="true">✓</span><span data-t-html="outbox.dwBad1"></span></li>
+        <li class="dw-fail"><span class="dw-mark" aria-hidden="true">✕</span><span data-t-html="outbox.dwBad2"></span></li>
+      </ol>
+      <p class="dw-result" data-t="outbox.dwBadResult"></p>
+    </div>
+    <div class="dw-case dw-good">
+      <h3 data-t="outbox.dwGoodTitle"></h3>
+      <ol>
+        <li class="dw-ok"><span class="dw-mark" aria-hidden="true">✓</span><span data-t-html="outbox.dwGood1"></span></li>
+        <li class="dw-retry"><span class="dw-mark" aria-hidden="true">↻</span><span data-t-html="outbox.dwGood2"></span></li>
+      </ol>
+      <p class="dw-result" data-t="outbox.dwGoodResult"></p>
+    </div>
+  </div>
+  <p class="dw-bridge" data-t="outbox.whyBridge"></p>
+  <div class="ob-head ob-subhead"><div>
     <div class="ob-eyebrow" data-ob="eyebrow"></div>
-    <h2 data-ob="title"></h2>
+    <h3 data-ob="title"></h3>
     <p data-ob="lead"></p>
   </div><span class="chip good" data-ob="chip"></span></div>
   <div class="ob-flow" aria-label="From business transaction to consumer">
@@ -223,14 +329,44 @@ public function orders(OrderRepository $orders): JsonResponse
     <div class="ob-foot-card"><b data-ob="note3title"></b><p data-ob="note3"></p></div>
   </div>
   </details>
+  <div class="popout-target" data-popout="">
   <details class="ob-code-details" id="obCodeDetails"><summary data-ob="codeSummary"></summary>
     <p class="ob-code-caption" data-ob="codeCaption"></p>
-    <pre class="ob-code" id="obCode"></pre>
+    <pre class="ob-code" id="obCode" data-code="sql"></pre>
   </details>
+  </div>
   <p class="ob-reference"><span data-ob="sources"></span> <a href="https://www.postgresql.org/docs/current/sql-select.html" target="_blank" rel="noopener">PostgreSQL: SELECT / SKIP LOCKED ↗</a> · <a href="https://microservices.io/patterns/data/transactional-outbox" target="_blank" rel="noopener">Transactional Outbox ↗</a> · <a href="https://microservices.io/patterns/data/polling-publisher.html" target="_blank" rel="noopener">Polling Publisher ↗</a></p>
+</div>
+<div class="panel lesson-summary">
+<div class="overline" data-t="lessons.common.summary"></div>
+<h2 data-t="lessons.locks.summaryTitle"></h2>
+<h3 class="lesson-label" data-t="lessons.common.rules"></h3>
+<ol class="lesson-rules" data-lesson-list="lessons.locks.rules"></ol>
+<div class="lesson-tables" data-lesson-table="lessons.locks.table"></div>
+<div class="lesson-foot">
+<div><h3 class="lesson-label" data-t="lessons.common.more"></h3><ul class="lesson-links" data-lesson-links="lessons.locks.links"></ul></div>
+<a class="lesson-next" href="#tab-node" data-t="lessons.locks.next"></a>
+</div>
 </div>
 </section>
 <section class="tab" id="tab-node">
+<div class="panel lesson-intro">
+<div class="overline" data-t="lessons.common.intro"></div>
+<h2 data-t="lessons.node.title"></h2>
+<div class="lesson-intro-grid">
+<div class="lesson-intro-text">
+<p data-t-html="lessons.node.problem"></p>
+<p class="lesson-example"><b data-t="lessons.common.example"></b><span data-t-html="lessons.node.example"></span></p>
+<p class="lesson-plan" data-t-html="lessons.node.plan"></p>
+</div>
+<div class="lesson-terms"><h3 class="lesson-label" data-t="lessons.common.terms"></h3><dl data-lesson-terms="lessons.node.terms"></dl></div>
+</div>
+<figure class="loop-diagram"><figcaption data-t="lessons.node.diagramTitle"></figcaption>
+<ol class="loop-steps" data-lesson-steps="lessons.node.loop"></ol>
+<p class="loop-return"><span aria-hidden="true">↺</span> <span data-t="lessons.node.loopReturn"></span></p>
+<p class="loop-contrast" data-t="lessons.node.loopContrast"></p>
+</figure>
+</div>
 <div class="panel relative"><div class="panel-head"><div><div class="overline" data-t="compare.overline"></div><h2 data-t="compare.title"></h2><p data-t="compare.lead"></p></div><span class="chip good" data-t="compare.chip"></span></div>
 
 <div class="compare-scenarios" id="compareScenarios" role="group" aria-label="Real-world request scenarios">
@@ -240,6 +376,7 @@ public function orders(OrderRepository $orders): JsonResponse
   <button class="compare-scenario" data-scenario="blocking" type="button" aria-pressed="false"><span class="scenario-no">04</span><strong data-t="compare.scenario.blocking.title"></strong><small data-t="compare.scenario.blocking.sub"></small></button>
 </div>
 <div id="comparisonScenarioDetail" class="comparison-detail" aria-live="polite"></div>
+<div class="compare-results" id="compareResults"></div>
 <div class="comparison-controls" id="compareControls" aria-label="Synchronized timeline controls">
   <div class="comparison-buttons">
     <button class="action primary" id="comparePlay" type="button" data-act="play"></button>
@@ -289,11 +426,29 @@ public function orders(OrderRepository $orders): JsonResponse
   <div class="flow-stage"><div class="stage-tag" data-t="compare.reactphpDeployment"></div><strong>Nginx <span class="diagram-arrow">→</span> <code>proxy_pass</code> <span class="diagram-arrow">→</span> <span data-t="compare.longRunningPhpCliHttp"></span></strong><p data-t="compare.notAPhpFpmWorker"></p></div>
   <div class="flow-stage"><div class="stage-tag" data-t="compare.fibersDeployment"></div><strong>Nginx <span class="diagram-arrow">→</span> <code>fastcgi_pass</code> <span class="diagram-arrow">→</span> <span data-t="compare.fibersFlow"></span></strong><p data-t="compare.fibersDeploymentNote"></p></div>
 </div>
+<details class="disclosure"><summary data-t="compare.psSummary"></summary>
+<div class="disclosure-body">
+<div class="linux-commands">
+<figure class="term linux-command"><figcaption class="term-bar">PHP-FPM · PHP-FPM + Fibers</figcaption><pre class="term-body">$ ps -eo pid,ppid,stat,cmd --forest | grep '[p]hp-fpm'
+    812       1 Ss   php-fpm: master process (/etc/php/8.3/fpm/php-fpm.conf)
+    901     812 S     \_ php-fpm: pool www
+    902     812 S     \_ php-fpm: pool www</pre><p data-t="compare.psFpmNote"></p></figure>
+<figure class="term linux-command"><figcaption class="term-bar">ReactPHP</figcaption><pre class="term-body">$ ps -eo pid,ppid,stat,cmd | grep '[s]erver.php'
+   1301       1 Ss   php server.php 8080
+   1302       1 Ss   php server.php 8081</pre><p data-t="compare.psReactNote"></p></figure>
+<figure class="term linux-command"><figcaption class="term-bar">Node.js · cluster</figcaption><pre class="term-body">$ ps -eo pid,ppid,stat,cmd | grep '[s]erver.js'
+   1401       1 Ssl  node server.js
+   1410    1401 Sl   node server.js
+   1411    1401 Sl   node server.js</pre><p data-t-html="compare.psNodeNote"></p></figure>
+</div>
+<p class="disclosure-note" data-t-html="compare.psHtopNote"></p>
+</div>
+</details>
 <details class="disclosure"><summary data-t="compare.codeSummary"></summary>
 <div class="disclosure-body">
 <p class="code-compare-lead" data-t="compare.sameEndpointLead"></p>
 <div class="code-compare">
-  <figure class="code-card"><figcaption><b>PHP-FPM · Doctrine DBAL</b><span data-t="compare.codeFpmNote"></span></figcaption><div class="codebox">// PHP-FPM · Symfony + Doctrine DBAL
+  <div class="popout-target" data-popout=""><figure class="code-card"><figcaption><b>PHP-FPM · Doctrine DBAL</b><span data-t="compare.codeFpmNote"></span></figcaption><div class="codebox" data-code="php">// PHP-FPM · Symfony + Doctrine DBAL
 #[Route('/api/orders', methods: ['GET'])]
 #[IsGranted('ROLE_USER')]
 public function orders(Connection $db): JsonResponse
@@ -312,8 +467,8 @@ public function orders(Connection $db): JsonResponse
     );
 
     return $this-&gt;json(['orders' =&gt; $orders, 'total' =&gt; $total]);
-}</div></figure>
-  <figure class="code-card"><figcaption><b>PHP-FPM + Fibers · AMPHP</b><span data-t="compare.codeFibersNote"></span></figcaption><div class="codebox">// PHP-FPM + Fibers · amphp/postgres
+}</div></figure></div>
+  <div class="popout-target" data-popout=""><figure class="code-card"><figcaption><b>PHP-FPM + Fibers · AMPHP</b><span data-t="compare.codeFibersNote"></span></figcaption><div class="codebox" data-code="php">// PHP-FPM + Fibers · amphp/postgres
 // One pooled connection per query.
 use Amp\Postgres\PostgresConnectionPool;
 use function Amp\async;
@@ -343,8 +498,8 @@ public function orders(PostgresConnectionPool $pool): JsonResponse
     ]);
 
     return $this-&gt;json(['orders' =&gt; $orders, 'total' =&gt; $total]);
-}</div></figure>
-  <figure class="code-card"><figcaption><b>ReactPHP · react/async</b><span data-t-html="compare.codeReactNote"></span></figcaption><div class="codebox">// ReactPHP · server.php (application bootstrap omitted)
+}</div></figure></div>
+  <div class="popout-target" data-popout=""><figure class="code-card"><figcaption><b>ReactPHP · react/async</b><span data-t-html="compare.codeReactNote"></span></figcaption><div class="codebox" data-code="php">// ReactPHP · server.php (application bootstrap omitted)
 use React\Http\Message\Response;
 use React\Promise\PromiseInterface;
 use function React\Async\{async, await};
@@ -393,8 +548,8 @@ $port = (int) ($argv[1] ?? 8080);
 (new React\Http\HttpServer($authenticate, $withFibers))
     -&gt;listen(new React\Socket\SocketServer('127.0.0.1:' . $port));
 // Start separately: php server.php 8080
-//                   php server.php 8081</div></figure>
-  <figure class="code-card"><figcaption><b>Node.js · pg</b><span data-t-html="compare.codeNodeNote"></span></figcaption><div class="codebox">// Node.js · Express + pg (Pool: one connection per query)
+//                   php server.php 8081</div></figure></div>
+  <div class="popout-target" data-popout=""><figure class="code-card"><figcaption><b>Node.js · pg</b><span data-t-html="compare.codeNodeNote"></span></figcaption><div class="codebox" data-code="js">// Node.js · Express + pg (Pool: one connection per query)
 // authenticate rejects unauthenticated requests and sets req.user.
 app.get('/api/orders', authenticate, async (req, res) =&gt; {
   const params = [req.user.customerId];
@@ -410,9 +565,9 @@ app.get('/api/orders', authenticate, async (req, res) =&gt; {
   ]);
   res.json({ orders: orders.rows, total: total.rows[0].total });
 });
-// Run two processes (cluster or PM2) on a two-core machine.</div></figure>
+// Run two processes (cluster or PM2) on a two-core machine.</div></figure></div>
 </div>
-<figure class="code-card"><figcaption><b data-t="compare.codeReactDeployment"></b><span data-t="compare.codeReactDeploymentNote"></span></figcaption><div class="codebox">upstream reactphp_orders {
+<figure class="code-card"><figcaption><b data-t="compare.codeReactDeployment"></b><span data-t="compare.codeReactDeploymentNote"></span></figcaption><div class="codebox" data-code="nginx">upstream reactphp_orders {
     server 127.0.0.1:8080;
     server 127.0.0.1:8081;
 }
@@ -427,8 +582,30 @@ server {
 <div class="info-grid"><div class="info-tile"><h3 data-t="compare.phpFpmSynchronousDbAccess"></h3><p data-t="compare.aWorkerWaitingForIts"></p></div><div class="info-tile"><h3 data-t="compare.nodeJsAsynchronousDbQuery"></h3><p data-t="compare.aRequestRemainsPendingBut"></p></div><div class="info-tile"><h3 data-t="compare.cpuHeavyWork"></h3><p data-t="compare.cpuHeavyWorkNote"></p></div><div class="info-tile"><h3 data-t="compare.raceConditionsDoNotDisappear"></h3><p data-t-html="compare.twoNodeJsRequestHandlers"></p></div></div>
 <p class="source"><span data-t="code.documentation"></span> <a href="https://amphp.org/postgres" target="_blank" rel="noopener">AMPHP PostgreSQL ↗</a> · <a href="https://reactphp.org/async/" target="_blank" rel="noopener">ReactPHP Async ↗</a> · <a href="https://node-postgres.com/features/pooling" target="_blank" rel="noopener">node-postgres Pool ↗</a> · <a href="https://nginx.org/en/docs/http/load_balancing.html" target="_blank" rel="noopener">Nginx ↗</a></p>
 </div>
+<div class="panel lesson-summary">
+<div class="overline" data-t="lessons.common.summary"></div>
+<h2 data-t="lessons.node.summaryTitle"></h2>
+<h3 class="lesson-label" data-t="lessons.common.rules"></h3>
+<ol class="lesson-rules" data-lesson-list="lessons.node.rules"></ol>
+<div class="lesson-tables" data-lesson-table="lessons.node.table"></div>
+<div class="lesson-foot">
+<div><h3 class="lesson-label" data-t="lessons.common.more"></h3><ul class="lesson-links" data-lesson-links="lessons.node.links"></ul></div>
+<a class="lesson-next" href="#tab-aggregate" data-t="lessons.node.next"></a>
+</div>
+</div>
 </section>
 <section class="tab" id="tab-aggregate">
+<div class="panel lesson-intro">
+<div class="overline" data-t="lessons.common.intro"></div>
+<h2 data-t="lessons.aggregate.title"></h2>
+<div class="lesson-intro-grid">
+<div class="lesson-intro-text">
+<p data-t-html="lessons.aggregate.problem"></p>
+<p class="lesson-plan" data-t-html="lessons.aggregate.plan"></p>
+</div>
+<div class="lesson-terms"><h3 class="lesson-label" data-t="lessons.common.terms"></h3><dl data-lesson-terms="lessons.aggregate.terms"></dl></div>
+</div>
+</div>
 <div class="panel relative" id="aggregateLab">
   <div class="panel-head"><div>
     <div class="overline" data-t="consistency.immOver"></div>
@@ -479,12 +656,35 @@ server {
     </div>
     <div class="domain-actors" id="aggActors"></div>
     <div class="domain-foot" id="aggFoot"></div>
-    <details><summary id="aggCodeSummary"></summary><div class="domain-code" id="aggCode"></div></details>
+    <div class="popout-target" data-popout=""><details><summary id="aggCodeSummary"></summary><div class="domain-code" id="aggCode" data-code="php"></div></details></div>
   </div>
   <p class="source"><span data-t="consistency.sources"></span> <a href="https://www.doctrine-project.org/projects/doctrine-orm/en/current/reference/transactions-and-concurrency.html" target="_blank" rel="noopener">Doctrine ORM locks ↗</a> · <a href="https://www.doctrine-project.org/projects/doctrine-orm/en/current/cookbook/aggregate-fields.html" target="_blank" rel="noopener">Doctrine Aggregate Fields ↗</a></p>
 </div>
+<div class="panel lesson-summary">
+<div class="overline" data-t="lessons.common.summary"></div>
+<h2 data-t="lessons.aggregate.summaryTitle"></h2>
+<h3 class="lesson-label" data-t="lessons.common.rules"></h3>
+<ol class="lesson-rules" data-lesson-list="lessons.aggregate.rules"></ol>
+<div class="lesson-tables" data-lesson-table="lessons.aggregate.table"></div>
+<div class="lesson-foot">
+<div><h3 class="lesson-label" data-t="lessons.common.more"></h3><ul class="lesson-links" data-lesson-links="lessons.aggregate.links"></ul></div>
+<a class="lesson-next" href="#tab-saga" data-t="lessons.aggregate.next"></a>
+</div>
+</div>
 </section>
 <section class="tab" id="tab-saga">
+<div class="panel lesson-intro">
+<div class="overline" data-t="lessons.common.intro"></div>
+<h2 data-t="lessons.saga.title"></h2>
+<div class="lesson-intro-grid">
+<div class="lesson-intro-text">
+<p data-t-html="lessons.saga.problem"></p>
+<p class="lesson-example"><b data-t="lessons.common.example"></b><span data-t-html="lessons.saga.example"></span></p>
+<p class="lesson-plan" data-t-html="lessons.saga.plan"></p>
+</div>
+<div class="lesson-terms"><h3 class="lesson-label" data-t="lessons.common.terms"></h3><dl data-lesson-terms="lessons.saga.terms"></dl></div>
+</div>
+</div>
 <div class="panel relative" id="sagaLab">
   <div class="panel-head"><div>
     <div class="overline" data-t="consistency.evOver"></div>
@@ -537,9 +737,21 @@ server {
     </div>
     <div class="domain-actors" id="sagaActors"></div>
     <div class="domain-foot" id="sagaFoot"></div>
-    <details><summary id="sagaCodeSummary"></summary><div class="domain-grid-note" id="sagaNotes"></div><div class="domain-code" id="sagaCode"></div></details>
+    <div class="popout-target" data-popout=""><details><summary id="sagaCodeSummary"></summary><div class="domain-grid-note" id="sagaNotes"></div><div class="domain-code" id="sagaCode" data-code="php"></div></details></div>
   </div>
   <p class="source"><span data-t="consistency.sources"></span> <a href="https://learn.microsoft.com/en-us/azure/architecture/patterns/saga" target="_blank" rel="noopener">Saga pattern ↗</a> · <a href="https://symfony.com/doc/current/messenger.html" target="_blank" rel="noopener">Symfony Messenger ↗</a></p>
+</div>
+<div class="panel lesson-summary">
+<div class="overline" data-t="lessons.common.summary"></div>
+<h2 data-t="lessons.saga.summaryTitle"></h2>
+<h3 class="lesson-label" data-t="lessons.common.rules"></h3>
+<ol class="lesson-rules" data-lesson-list="lessons.saga.rules"></ol>
+<p class="lesson-practice"><b data-t="lessons.common.practice"></b> <span data-t-html="lessons.saga.practice"></span></p>
+<div class="lesson-tables" data-lesson-table="lessons.saga.table"></div>
+<div class="lesson-foot">
+<div><h3 class="lesson-label" data-t="lessons.common.more"></h3><ul class="lesson-links" data-lesson-links="lessons.saga.links"></ul></div>
+<a class="lesson-next" href="#tab-php" data-t="lessons.saga.next"></a>
+</div>
 </div>
 </section>
 </main>

@@ -23,6 +23,15 @@ window.TEXTS = {
     next: { en: 'Next →', pl: 'Dalej →' },
     reset: { en: 'Reset', pl: 'Od początku' },
     moreInfo: { en: 'More about this scenario', pl: 'Więcej o tym scenariuszu' },
+    popoutOpen: { en: 'Open in a side window', pl: 'Otwórz w oknie obok' },
+    popoutWindow: { en: 'Side window: {title}', pl: 'Okno obok: {title}' },
+    popoutDrag: { en: 'Drag to move the window', pl: 'Przeciągnij, żeby przesunąć okno' },
+    popoutRestore: { en: 'Put back', pl: 'Przywróć na miejsce' },
+    popoutRestoreHere: { en: 'Put it back here', pl: 'Przywróć tutaj' },
+    popoutPlaceholder: {
+      en: 'This part is open in a side window. Scroll to the experiment and compare both views.',
+      pl: 'Ta część jest otwarta w oknie obok. Przewiń do eksperymentu i porównuj oba widoki.',
+    },
     showTime: { en: 'Show state at t = {time}', pl: 'Pokaż stan w t = {time}' },
     time: { en: 'Time →', pl: 'Czas →' },
     request: { en: 'Request {id}', pl: 'Żądanie {id}' },
@@ -107,12 +116,12 @@ window.TEXTS = {
       pl: 'Zobacz architekturę w przestrzeni i czasie.',
     },
     fromPhpRequestsToSafe: {
-      en: 'From PHP requests<br>to safe concurrent updates',
-      pl: 'Od żądań PHP<br>do bezpiecznych aktualizacji',
+      en: 'Concurrency in a PHP application,<br>step by step',
+      pl: 'Współbieżność w aplikacji PHP<br>krok po kroku',
     },
     traceMultipleUsersThroughPhp: {
-      en: 'Trace multiple users through PHP-FPM processes, CPU cores and database locks. Then compare ReactPHP and Node.js event loops.',
-      pl: 'Zobacz, jak żądania trafiają do procesów PHP-FPM i korzystają z rdzeni CPU oraz bazy danych. Potem porównaj ten przebieg z ReactPHP i Node.js.',
+      en: 'Five chapters on what happens on the server when many users use an application at once: PHP-FPM processes and CPU cores, database locks, event loops, and data consistency in DDD aggregates and Sagas. Basic PHP and SQL are enough to follow along.',
+      pl: 'Pięć rozdziałów o tym, co dzieje się na serwerze, gdy wielu użytkowników korzysta z aplikacji jednocześnie: procesy PHP-FPM i rdzenie CPU, blokady w bazie, pętle zdarzeń oraz spójność danych w agregatach DDD i Sagach. Wystarczy znajomość podstaw PHP i SQL.',
     },
   },
   tabs: {
@@ -126,6 +135,7 @@ window.TEXTS = {
     jumpArchitecture: { en: 'Architecture', pl: 'Architektura' },
     jumpSimulation: { en: 'Request simulation', pl: 'Symulacja żądań' },
     jumpCpu: { en: 'CPU scheduling', pl: 'Przydział CPU' },
+    jumpLinux: { en: 'Observe in Linux', pl: 'Podgląd w Linuksie' },
     jumpRace: { en: 'Optimistic and pessimistic locks', pl: 'Blokady optymistyczne i pesymistyczne' },
     jumpCode: { en: 'SQL and Doctrine code', pl: 'Kod SQL i Doctrine' },
     jumpOutbox: { en: 'Outbox relay', pl: 'Publikacja z outboxa' },
@@ -143,8 +153,8 @@ window.TEXTS = {
       pl: 'Jak Nginx, PHP-FPM i Symfony obsługują żądania',
     },
     firstPrinciple: {
-      en: 'Start with a real Symfony endpoint. The Nginx–FPM architecture determines how requests are assigned to PHP processes; Symfony does not create a new process per controller.',
-      pl: 'Zacznij od rzeczywistego endpointu Symfony. Architektura Nginx–FPM decyduje, który proces PHP obsłuży żądanie; Symfony nie tworzy osobnego procesu dla każdego kontrolera.',
+      en: 'Nginx accepts the HTTP connection and passes the request to PHP-FPM. FPM keeps a pool of PHP processes that are already running and gives each of them one request at a time. Symfony does not start a new process for a controller: your code runs inside a process that FPM started earlier.',
+      pl: 'Nginx przyjmuje połączenie HTTP i przekazuje żądanie do PHP-FPM. FPM trzyma pulę uruchomionych wcześniej procesów PHP i każdemu przydziela jedno żądanie naraz. Symfony nie tworzy nowego procesu dla kontrolera: twój kod działa w procesie, który FPM uruchomił wcześniej.',
     },
     vocabulary: {
       en: '<strong>Symfony vocabulary:</strong> an <em>FPM worker</em> serves HTTP requests; a <em>Messenger worker</em> is a separate long-running <code>bin/console messenger:consume async</code> process; a <em>Symfony Console command</em> is a PHP CLI process. They may run simultaneously, but they are not interchangeable.',
@@ -162,10 +172,7 @@ window.TEXTS = {
       en: 'One Symfony request, one PHP-FPM worker process',
       pl: 'Jedno żądanie Symfony, jeden proces PHP-FPM',
     },
-    executionEnvironmentPhpSyntax: {
-      en: 'Execution environment ≠ PHP syntax',
-      pl: 'Środowisko wykonania ≠ składnia PHP',
-    },
+    executionEnvironmentPhpSyntax: 'Nginx · PHP-FPM · Symfony',
     n01Architecture: { en: '01 / ARCHITECTURE', pl: '01 / ARCHITEKTURA' },
     sixCustomersRequestGetApi: {
       en: 'Six customers request <code>GET /api/orders</code> at once',
@@ -237,10 +244,10 @@ window.TEXTS = {
       en: 'A master manages worker processes. Each worker handles one request at a time; <code>pm.max_children</code> limits simultaneous requests.',
       pl: 'Proces nadrzędny zarządza pulą procesów roboczych. Każdy worker obsługuje jedno żądanie naraz; <code>pm.max_children</code> ogranicza liczbę jednocześnie obsługiwanych żądań.',
     },
-    firstPrincipleLabel: { en: 'First principle', pl: 'Pierwsza zasada' },
+    firstPrincipleLabel: { en: 'Basics', pl: 'Podstawy' },
   },
   simulation: {
-    liveExperiment: { en: 'Live experiment', pl: 'Eksperyment na żywo' },
+    liveExperiment: { en: 'Experiment', pl: 'Eksperyment' },
     usersCallTheSameEndpoint: {
       en: 'users call the same endpoint. What happens next?',
       pl: 'użytkowników wywołuje ten sam endpoint. Co się wtedy dzieje?',
@@ -249,7 +256,7 @@ window.TEXTS = {
       en: 'Every time slot is a modeled unit of time. Follow the Nginx request backlog, occupied PHP-FPM workers, CPU cores and database I/O separately.',
       pl: 'Każda kolumna to umowna jednostka czasu. Obserwuj osobno kolejkę żądań w Nginx, zajęte workery PHP-FPM, rdzenie CPU i I/O bazy danych.',
     },
-    realisticArchitecturalModel: { en: 'Realistic architectural model', pl: 'Realistyczny model architektury' },
+    realisticArchitecturalModel: { en: 'Simplified model · logical time', pl: 'Model uproszczony · umowny czas' },
     configuration: { en: 'Configuration', pl: 'Konfiguracja' },
     serverEnvironment: { en: 'Server environment', pl: 'Środowisko serwera' },
     scenario: { en: 'Scenario', pl: 'Scenariusz' },
@@ -353,14 +360,10 @@ window.TEXTS = {
       en: 'Two customers call a Symfony controller. An FPM worker keeps a request until it finishes; the operating system decides which process gets CPU time. Follow one tick at a time.',
       pl: 'Dwóch użytkowników wywołuje kontroler Symfony. Proces FPM obsługuje przypisane żądanie do końca, a system operacyjny decyduje, który proces otrzyma czas CPU. Przejdź przez kolejne takty.',
     },
-    explicitClockOneDiagram: { en: 'Explicit clock · one diagram', pl: 'Jawna oś czasu · jeden diagram' },
+    explicitClockOneDiagram: { en: '2 requests · 1–2 cores', pl: '2 żądania · 1–2 rdzenie' },
     eachColumnIsALogical: {
       en: 'Each column is a <b>logical time slot</b>, not a real millisecond. This is one possible OS schedule, not a guarantee. A waiting FPM process remains assigned to its request but does not necessarily occupy a CPU core.',
       pl: 'Każda kolumna to <b>umowny takt czasu</b>, a nie milisekunda. Pokazujemy jeden możliwy harmonogram, a nie gwarantowany przebieg. Proces FPM nadal obsługuje żądanie, nawet gdy oczekuje i nie korzysta z rdzenia CPU.',
-    },
-    nextTwoRequestsUpdateThe: {
-      en: 'Next: two requests update the same database record',
-      pl: 'Dalej: dwa żądania zmieniają ten sam rekord bazy danych',
     },
     schedules: {
       sequential: {
@@ -539,6 +542,19 @@ window.TEXTS = {
       en: 'Model details: READ COMMITTED and FPM workers',
       pl: 'Szczegóły modelu: READ COMMITTED i workery FPM',
     },
+    pgSummary: { en: 'See the lock wait in PostgreSQL', pl: 'Zobacz czekanie na blokadę w PostgreSQL' },
+    pgLead: {
+      en: 'While request B waits in pessimistic mode (steps 1–5), open another <code>psql</code> session and query the <code>pg_stat_activity</code> view. It lists the connections, shows which one is waiting and which session blocks it.',
+      pl: 'Gdy w trybie pesymistycznym żądanie B czeka (kroki 1–5), otwórz kolejną sesję <code>psql</code> i odpytaj widok <code>pg_stat_activity</code>. Widok wypisuje połączenia i pokazuje, które z nich czeka i która sesja je blokuje.',
+    },
+    pgRead: {
+      en: '<b>4101</b> is request A’s session. It holds the row lock in an open transaction and is waiting for the next command from PHP, hence <code>idle in transaction</code>. <b>4102</b> is request B: its <code>SELECT … FOR UPDATE</code> waits for a lock (<code>Lock</code>), and <code>pg_blocking_pids</code> points to session A. PostgreSQL reports a row-lock wait as <code>transactionid</code>, because B waits for A’s transaction to end. If you often see <code>idle in transaction</code> lasting for seconds, the application holds its transactions too long.',
+      pl: '<b>4101</b> to sesja żądania A. Trzyma blokadę wiersza w otwartej transakcji i czeka na kolejne polecenie z PHP, stąd <code>idle in transaction</code>. <b>4102</b> to żądanie B: jego <code>SELECT … FOR UPDATE</code> czeka na blokadę (<code>Lock</code>), a <code>pg_blocking_pids</code> wskazuje sesję A. PostgreSQL oznacza czekanie na blokadę wiersza jako <code>transactionid</code>, bo B czeka na koniec transakcji A. Jeśli <code>idle in transaction</code> często trwa całe sekundy, aplikacja trzyma transakcje zbyt długo.',
+    },
+    pgOptimistic: {
+      en: 'In optimistic mode this query shows no waiting session. Nobody holds a lock, and the conflict appears only when the second <code>UPDATE</code> matches no row.',
+      pl: 'W trybie optymistycznym to zapytanie nie pokaże żadnej czekającej sesji. Nikt nie trzyma blokady, a konflikt wychodzi dopiero wtedy, gdy drugi <code>UPDATE</code> nie trafi w żaden wiersz.',
+    },
     raceSemantics: {
       en: 'The panel shows committed data (READ COMMITTED). W prepares a transaction’s write; U commits it and releases its row lock. In the other two traces each successful W commits a short transaction.',
       pl: 'Panel pokazuje dane zatwierdzone (READ COMMITTED). W zapisuje zmianę wewnątrz transakcji; U zatwierdza ją i zwalnia blokadę wiersza. W pozostałych dwóch przebiegach każde udane W zatwierdza krótką transakcję.',
@@ -687,15 +703,12 @@ window.TEXTS = {
       en: 'Match each database action on the timeline to executable SQL or Doctrine ORM code. Change the locking strategy to see the matching implementation.',
       pl: 'Dopasuj działania bazy z osi czasu do SQL lub kodu Doctrine ORM. Przełącz strategię blokowania, aby zobaczyć odpowiednią implementację.',
     },
-    executablePatternsExplicitTransactio: {
-      en: 'Executable patterns · explicit transaction boundaries',
-      pl: 'Przykłady kodu · jawne granice transakcji',
-    },
+    executablePatternsExplicitTransactio: 'PostgreSQL · Doctrine ORM',
     codeSummary: {
       en: 'Show the code: locks in PostgreSQL and Symfony / Doctrine',
       pl: 'Pokaż kod: blokady w PostgreSQL i Symfony / Doctrine',
     },
-    teachingNote: { en: 'TEACHING NOTE', pl: 'WSKAZÓWKA DYDAKTYCZNA' },
+    teachingNote: { en: 'EXPLANATION', pl: 'WYJAŚNIENIE' },
     documentation: { en: 'Documentation:', pl: 'Dokumentacja:' },
     copy: { en: 'Copy code', pl: 'Kopiuj kod' },
     copied: { en: 'Copied', pl: 'Skopiowano' },
@@ -718,7 +731,7 @@ window.TEXTS = {
           title: { en: 'Hold the row lock inside a transaction', pl: 'Utrzymaj blokadę wiersza w transakcji' },
           body: {
             en: 'SELECT FOR UPDATE locks the selected row. A competing write or FOR UPDATE waits until COMMIT or ROLLBACK. Read, calculate and write within the transaction. The UPDATE explicitly increments version to match the animation; the lock itself does not change it.',
-            pl: 'SELECT FOR UPDATE blokuje wybrany wiersz. Konkurencyjny zapis lub FOR UPDATE czeka do COMMIT albo ROLLBACK. Odczytaj, oblicz i zapisz w ramach transakcji. UPDATE jawnie zwiększa version, zgodnie z animacją; sama blokada nie zmienia wersji.',
+            pl: 'SELECT FOR UPDATE blokuje wybrany wiersz. Konkurencyjny zapis lub FOR UPDATE czeka do COMMIT albo ROLLBACK. Odczytaj, oblicz i zapisz w jednej transakcji. UPDATE jawnie zwiększa version, zgodnie z animacją; sama blokada nie zmienia wersji.',
           },
           caution: {
             en: 'Keep transactions short. Ordinary SELECT without FOR UPDATE is not blocked by a row-level FOR UPDATE lock. NOWAIT and SKIP LOCKED have special semantics and should not be used indiscriminately.',
@@ -755,11 +768,47 @@ window.TEXTS = {
     },
   },
   outbox: {
-    eyebrow: { en: 'CONCURRENT RELAYS / TRANSACTIONAL OUTBOX', pl: 'WYŚCIG PROCESÓW / TRANSACTIONAL OUTBOX' },
+    eyebrow: { en: 'EXPERIMENT / CONCURRENT RELAYS', pl: 'EKSPERYMENT / WYŚCIG PROCESÓW' },
     title: { en: 'Three relay processes compete for one event', pl: 'Trzy procesy relay konkurują o jedno zdarzenie' },
     lead: {
-      en: 'When a customer places an order, the shop must tell the warehouse through a message broker. The OrderPlaced event first waits in the outbox_messages table. Three background workers (Symfony CLI commands) try to send the oldest event, #101, at the same moment. Pick a strategy and check whether the broker receives duplicates.',
-      pl: 'Gdy klient złoży zamówienie, sklep musi powiadomić magazyn przez brokera wiadomości. Zdarzenie OrderPlaced najpierw czeka w tabeli outbox_messages. Trzy procesy w tle (komendy Symfony CLI) w tej samej chwili próbują wysłać najstarsze zdarzenie #101. Wybierz strategię i sprawdź, czy broker dostaje duplikaty.',
+      en: 'The OrderPlaced event and two later events wait in the outbox_messages table. Three relay processes (Symfony CLI commands) try to send the oldest event, #101, at the same moment. Pick a strategy and check whether the broker receives duplicates.',
+      pl: 'Zdarzenie OrderPlaced i dwa kolejne czekają w tabeli outbox_messages. Trzy procesy relay (komendy Symfony CLI) w tej samej chwili próbują wysłać najstarsze zdarzenie #101. Wybierz strategię i sprawdź, czy broker dostaje duplikaty.',
+    },
+    whyEyebrow: 'TRANSACTIONAL OUTBOX',
+    whyTitle: {
+      en: 'How do you send an event safely after saving to the database?',
+      pl: 'Jak bezpiecznie wysłać zdarzenie po zapisie w bazie?',
+    },
+    whyLead: {
+      en: 'When a customer places an order, the shop saves it in PostgreSQL and has to tell the warehouse through a message broker. These are two operations in two separate systems. One transaction cannot cover both, so a crash between them leaves the work half done.',
+      pl: 'Gdy klient składa zamówienie, sklep zapisuje je w PostgreSQL i musi powiadomić magazyn przez brokera wiadomości. To dwie operacje w dwóch osobnych systemach. Jedna transakcja nie obejmie obu, więc awaria między nimi zostawia pracę w połowie.',
+    },
+    dwBadTitle: { en: 'Without an outbox: two separate writes', pl: 'Bez outboxa: dwa osobne zapisy' },
+    dwBad1: { en: '<code>COMMIT</code> the order in PostgreSQL.', pl: '<code>COMMIT</code> zamówienia w PostgreSQL.' },
+    dwBad2: {
+      en: 'Send <code>OrderPlaced</code> to the broker. The process crashes or the network fails.',
+      pl: 'Wysłanie <code>OrderPlaced</code> do brokera. Proces pada albo sieć zawodzi.',
+    },
+    dwBadResult: {
+      en: 'The order exists, but the warehouse never hears about it.',
+      pl: 'Zamówienie istnieje, ale magazyn nigdy się o nim nie dowie.',
+    },
+    dwGoodTitle: { en: 'With an outbox: one COMMIT, sending later', pl: 'Z outboxem: jeden COMMIT, wysyłka później' },
+    dwGood1: {
+      en: 'One transaction saves the order and a row in <code>outbox_messages</code>.',
+      pl: 'Jedna transakcja zapisuje zamówienie i wiersz w <code>outbox_messages</code>.',
+    },
+    dwGood2: {
+      en: 'A separate process, the relay, reads the table and sends the event. After a crash it tries again.',
+      pl: 'Osobny proces, czyli relay, czyta tabelę i wysyła zdarzenie. Po awarii próbuje ponownie.',
+    },
+    dwGoodResult: {
+      en: 'The event is not lost, but it can arrive more than once. The consumer has to recognise and skip duplicates.',
+      pl: 'Zdarzenie nie ginie, ale może dotrzeć więcej niż raz. Odbiorca musi rozpoznać i pominąć duplikat.',
+    },
+    whyBridge: {
+      en: 'Several relay processes usually run at once to keep up with sending. How do you stop them from taking the same event? The experiment below compares three ways of fetching rows.',
+      pl: 'Zwykle działa kilka procesów relay naraz, żeby nadążyć z wysyłką. Jak sprawić, żeby nie wzięły tego samego zdarzenia? Eksperyment poniżej porównuje trzy sposoby pobierania wierszy.',
     },
     chip: { en: '3 PHP CLI processes · 1 shared table', pl: '3 procesy PHP CLI · 1 wspólna tabela' },
     flow1: 'Symfony / Doctrine',
@@ -1026,7 +1075,7 @@ window.TEXTS = {
           { en: 'A locks #101; B and C skip it', pl: 'A blokuje #101; B i C omijają blokadę' },
           {
             en: 'A holds an SQL lock on #101. SKIP LOCKED lets B lock #102 and C lock #103 without waiting.',
-            pl: 'A trzyma blokadę SQL na #101. SKIP LOCKED pozwala B zablokować #102, a C — #103, bez czekania.',
+            pl: 'A trzyma blokadę SQL na #101. Dzięki SKIP LOCKED B blokuje #102, a C blokuje #103, bez czekania.',
           },
         ],
         [
@@ -1197,6 +1246,27 @@ window.TEXTS = {
       },
     },
     sharedTimeAxis: { en: 'SHARED TIME AXIS', pl: 'WSPÓLNA OŚ CZASU' },
+    resultsTitle: {
+      en: 'Last response in this scenario, in logical time units',
+      pl: 'Ostatnia odpowiedź w tym scenariuszu, w umownych jednostkach czasu',
+    },
+    psSummary: { en: 'How to recognise these models in ps and htop', pl: 'Jak rozpoznać te modele w ps i htop' },
+    psFpmNote: {
+      en: 'Workers live through many requests, but each handles one at a time. With Fibers the list looks the same.',
+      pl: 'Workery żyją przez wiele żądań, ale każdy obsługuje jedno naraz. Z Fibers lista wygląda tak samo.',
+    },
+    psReactNote: {
+      en: 'Plain PHP CLI processes, started for example by systemd or Supervisor. Each runs its own loop and handles many requests at once.',
+      pl: 'Zwykłe procesy PHP CLI, uruchamiane np. przez systemd albo Supervisora. Każdy ma własną pętlę i obsługuje wiele żądań naraz.',
+    },
+    psNodeNote: {
+      en: 'In cluster mode the primary process accepts connections and hands them to the workers, which run the application code. The letter <code>l</code> in STAT marks a multithreaded process: libuv and V8 use helper threads, but your JavaScript runs on one thread.',
+      pl: 'W trybie cluster proces główny (primary) przyjmuje połączenia i przekazuje je workerom, które wykonują kod aplikacji. Litera <code>l</code> w kolumnie STAT oznacza proces wielowątkowy: libuv i V8 mają wątki pomocnicze, ale twój kod JavaScript działa w jednym wątku.',
+    },
+    psHtopNote: {
+      en: 'In <code>htop</code>, during the PDF scenario each of these processes shows about 100% CPU, one full core. During the database scenarios the event-loop processes use little CPU even while they serve many requests.',
+      pl: 'W <code>htop</code> przy scenariuszu z fakturami PDF każdy z tych procesów pokaże około 100% CPU, czyli jeden pełny rdzeń. Przy scenariuszach z zapytaniami do bazy procesy z pętlą zdarzeń zużywają mało CPU, choć obsługują wiele żądań.',
+    },
     pendingIO: { en: 'Pending I/O', pl: 'Oczekiwanie na I/O' },
     waitingForAWorkerCallback: { en: 'Waiting for a worker / callback', pl: 'Oczekiwanie na workera / callback' },
     cpuCore: { en: 'CPU core', pl: 'Rdzeń CPU' },
@@ -1220,8 +1290,8 @@ window.TEXTS = {
       pl: 'ReactPHP / 2 długo działające procesy PHP CLI',
     },
     reactLead: {
-      en: 'Nginx spreads requests over two ReactPHP processes listening on different ports. The model gives each process a core; Nginx does not pin processes to cores. With enough pooled connections and a non-blocking client, each loop keeps several queries in flight. <code>await()</code> from react/async uses Fibers to make the handler read top to bottom.',
-      pl: 'Nginx rozdziela żądania między dwa procesy ReactPHP nasłuchujące na różnych portach. Model przypisuje każdemu procesowi rdzeń; Nginx tego nie robi. Nieblokujący klient i wystarczająca liczba połączeń w puli pozwalają każdej pętli utrzymywać kilka zapytań w toku. <code>await()</code> z react/async używa Fibers, dzięki czemu kod handlera czyta się z góry na dół.',
+      en: 'Two long-running PHP CLI processes, each with its own event loop. Nginx spreads requests between them. With a non-blocking database client, one process keeps several queries in flight while it starts handling the next request.',
+      pl: 'Dwa długo działające procesy PHP CLI, każdy z własną pętlą zdarzeń. Nginx rozdziela między nie żądania. Dzięki nieblokującemu klientowi bazy jeden proces ma w toku kilka zapytań i w tym czasie zaczyna obsługiwać kolejne żądanie.',
     },
     nodeTitle: { en: 'Node.js / 2 processes', pl: 'Node.js / 2 procesy' },
     nodeLead: {
@@ -1386,8 +1456,8 @@ window.TEXTS = {
     immTitle: { en: 'Immediate consistency', pl: 'Spójność natychmiastowa' },
     immChip: { en: 'One aggregate · one transaction', pl: 'Jeden agregat · jedna transakcja' },
     immDesc: {
-      en: 'After the Order transaction commits, its item-count rule must already be true. This applies within the Order aggregate, not automatically to other services.',
-      pl: 'Po zatwierdzeniu transakcji Order reguła liczby pozycji musi być spełniona. Dotyczy to agregatu Order, a nie automatycznie innych usług.',
+      en: 'The order’s item limit must hold right after every save. This guarantee covers one Order aggregate, not other services.',
+      pl: 'Limit pozycji zamówienia musi być spełniony od razu po każdym zapisie. Ta gwarancja obejmuje jeden agregat Order, a nie inne usługi.',
     },
     evOver: { en: 'SAGA · SERVICES AND MESSAGES', pl: 'SAGA · USŁUGI I KOMUNIKATY' },
     evTitle: { en: 'Eventual consistency', pl: 'Spójność ostateczna (eventual consistency)' },
@@ -1447,7 +1517,7 @@ window.TEXTS = {
     initial: { en: 'Limit: 2 · Initially saved: 1', pl: 'Limit: 2 · Początkowo zapisano: 1' },
     mapOver: { en: 'SYSTEM MAP · TWO DIFFERENT BOUNDARIES', pl: 'MAPA SYSTEMU · DWIE RÓŻNE GRANICE' },
     mapLead: {
-      en: 'The solid frame contains the Ordering model. The dashed frame highlights the smaller Order aggregate whose invariant must hold after each COMMIT.',
+      en: 'The solid frame contains the Ordering model. The dashed frame marks the smaller Order aggregate whose invariant must hold after each COMMIT.',
       pl: 'Ciągła ramka obejmuje model Ordering. Przerywana granica wskazuje mniejszy agregat Order, którego reguła musi być spełniona po każdym COMMIT.',
     },
     context: { en: 'Ordering bounded context', pl: 'Kontekst ograniczony · Ordering' },
@@ -1569,7 +1639,7 @@ window.TEXTS = {
     outsideRight3: { en: 'Shipping', pl: 'Wysyłka' },
     outsideRight3Desc: { en: 'Owns shipment creation.', pl: 'Odpowiada za utworzenie przesyłki.' },
     codeAgg: { en: 'Symfony / Doctrine · protected variant, mapping fragments', pl: 'Symfony / Doctrine · wariant z ochroną, fragmenty mapowania' },
-    codeSaga: { en: 'Symfony Messenger · process outline', pl: 'Symfony Messenger · szkic procesu' },
+    codeSaga: { en: 'Symfony Messenger · Saga orchestrator in the Orders context', pl: 'Symfony Messenger · orkiestrator Sagi w kontekście Zamówień' },
     play: { en: '▶ Play', pl: '▶ Odtwórz' },
     pause: { en: 'Ⅱ Pause', pl: 'Ⅱ Pauza' },
     replay: { en: '↺ Replay', pl: '↺ Odtwórz ponownie' },
@@ -1634,8 +1704,8 @@ window.TEXTS = {
     },
     orchestrator: { en: 'Order Saga · process coordinator', pl: 'Saga zamówienia · koordynator procesu' },
     orchestratorDesc: {
-      en: 'Records progress and decides which command to send next.',
-      pl: 'Zapisuje postęp i decyduje, które polecenie wysłać dalej.',
+      en: 'An application service in the Orders context. Records progress and decides which command to send next.',
+      pl: 'Serwis aplikacyjny w kontekście Zamówień. Zapisuje postęp i decyduje, które polecenie wysłać dalej.',
     },
     serviceNames: [
       { en: 'Orders service', pl: 'Zamówienia' },
@@ -1658,16 +1728,16 @@ window.TEXTS = {
       pl: 'Spójność ostateczna zależy od skutecznego przetwarzania i odzyskiwania po błędach. Kompensacje także mogą zawieść i wymagać ponowień albo interwencji.',
     },
     sagaNote1: {
-      en: 'Reliable messages: store the business change and outbox entry atomically.',
-      pl: 'Niezawodne komunikaty: zapisz zmianę biznesową i wpis outbox atomowo.',
+      en: 'Where it runs: the Saga is an application service of the Orders context. Inventory, Payments and Shipping know nothing about it. They handle commands and publish events.',
+      pl: 'Gdzie działa: Saga to serwis aplikacyjny kontekstu Zamówień. Magazyn, Płatności i Wysyłka nic o niej nie wiedzą, tylko przyjmują polecenia i publikują zdarzenia.',
     },
     sagaNote2: {
-      en: 'Safe retries: use process IDs and idempotency keys.',
-      pl: 'Bezpieczne ponowienia: stosuj identyfikatory procesu i klucze idempotencji.',
+      en: 'One step, one transaction: the new Saga step and the next command are saved together in the Orders database. The relay process from chapter 02 sends the command on.',
+      pl: 'Jeden krok, jedna transakcja: nowy krok Sagi i następne polecenie trafiają razem do bazy Zamówień. Proces relay z rozdziału 02 wysyła polecenie dalej.',
     },
     sagaNote3: {
-      en: 'Recovery: persist Saga state, retry failed steps and surface irrecoverable failures.',
-      pl: 'Odzyskiwanie: utrwalaj stan Sagi, ponawiaj błędne kroki i zgłaszaj błędy wymagające interwencji.',
+      en: 'Duplicates: the handler locks the Saga row and checks the current step, so a second copy of an event changes nothing. If a handler fails, Messenger retries the message.',
+      pl: 'Duplikaty: handler blokuje wiersz Sagi i sprawdza bieżący krok, więc drugi egzemplarz zdarzenia niczego nie zmienia. Jeśli handler zakończy się błędem, Messenger ponowi obsługę komunikatu.',
     },
     mapMessage: { en: 'Message in this step', pl: 'Komunikat w tym kroku' },
     noMessage: {
@@ -1783,7 +1853,7 @@ window.TEXTS = {
           { en: 'Payments commits the charge', pl: 'Płatności pobierają środki' },
           {
             en: 'A payment is captured in the Payments database.',
-            pl: 'Pobranie środków zostaje zapisane w bazie płatności.',
+            pl: 'Baza płatności zapisuje pobranie środków.',
           },
         ],
         [
@@ -1894,6 +1964,598 @@ window.TEXTS = {
     assumptions: {
       en: 'Model assumptions: discrete time units, a single idealized FIFO queue representing admission to FPM (real queues may exist in Nginx, kernel sockets and proxies), one request per FPM worker, idealized CPU-core scheduling, equal per-request cost, two processes on two CPU cores for every approach in the comparison (requests alternate between event-loop processes) and non-blocking I/O clients for the event-loop and Fibers models, except in the scenario with a blocking driver. Each in-flight query has an available database connection. We omit post-response work (such as kernel.terminate), process overhead, database connection limits, network variation and operating-system scheduling details. Not a throughput benchmark; Symfony controller examples correspond to equivalent, not identical, HTTP handlers in each runtime. References: <a href="https://reactphp.org/http/" rel="noopener" target="_blank">ReactPHP HTTP</a> · <a href="https://symfony.com/doc/current/messenger.html" rel="noopener" target="_blank">Symfony Messenger</a> · <a href="https://www.php.net/manual/en/install.fpm.configuration.php" rel="noopener" target="_blank">PHP-FPM</a> · <a href="https://www.php.net/manual/en/features.commandline.webserver.php" rel="noopener" target="_blank">PHP built-in server</a> · <a href="https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick" rel="noopener" target="_blank">Node.js event loop</a>.',
       pl: 'Założenia modelu: umowne jednostki czasu, jedna uproszczona kolejka FIFO przed FPM (w praktyce kolejki mogą występować w Nginx, gniazdach systemowych i serwerach pośredniczących), jedno żądanie na proces FPM, uproszczony przydział czasu CPU, jednakowy koszt żądań, dwa procesy na dwóch rdzeniach CPU dla każdego podejścia w porównaniu (żądania trafiają na zmianę do procesów z pętlą zdarzeń) oraz nieblokujące klienty I/O w modelach pętli zdarzeń i Fibers, z wyjątkiem scenariusza z blokującym sterownikiem. Każde zapytanie w toku ma dostępne połączenie z bazą. Pomijamy pracę po wysłaniu odpowiedzi (np. kernel.terminate), narzut procesów, limity połączeń z bazą, zmienność sieci i szczegóły planisty systemu. To nie jest benchmark przepustowości. Przykładom kontrolerów Symfony odpowiadają równoważne, a nie identyczne handlery HTTP w pozostałych środowiskach. Źródła: <a href="https://reactphp.org/http/" rel="noopener" target="_blank">ReactPHP HTTP</a> · <a href="https://symfony.com/doc/current/messenger.html" rel="noopener" target="_blank">Symfony Messenger</a> · <a href="https://www.php.net/manual/en/install.fpm.configuration.php" rel="noopener" target="_blank">PHP-FPM</a> · <a href="https://www.php.net/manual/en/features.commandline.webserver.php" rel="noopener" target="_blank">Serwer wbudowany PHP</a> · <a href="https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick" rel="noopener" target="_blank">Pętla zdarzeń Node.js</a>.',
+    },
+  },
+  // Chapter introductions and summaries. Lists and tables are rendered by app.js from data-lesson-* attributes.
+  lessons: {
+    common: {
+      intro: { en: 'Introduction', pl: 'Wprowadzenie' },
+      terms: { en: 'Key terms', pl: 'Pojęcia na start' },
+      example: { en: 'An everyday example', pl: 'Przykład z życia' },
+      summary: { en: 'Summary', pl: 'Podsumowanie' },
+      rules: { en: 'Main rules', pl: 'Najważniejsze zasady' },
+      more: { en: 'Further reading', pl: 'Dowiedz się więcej' },
+      practice: { en: 'In practice', pl: 'W praktyce' },
+    },
+    php: {
+      title: {
+        en: 'Why do customers wait when the CPU is idle?',
+        pl: 'Dlaczego klienci czekają, skoro procesor nic nie robi?',
+      },
+      problem: {
+        en: 'A Symfony shop feels fast while only a few people use it. When a sale starts and six customers open the same page in the same second, some of them wait for a response even though the server’s CPU is almost idle. To see why, separate two questions: who <b>handles</b> a request (a PHP process) and who <b>executes</b> its code at a given moment (a CPU core).',
+        pl: 'Sklep na Symfony działa szybko, dopóki odwiedza go kilka osób. Gdy rusza promocja i sześciu klientów otwiera tę samą stronę w tej samej sekundzie, część z nich czeka na odpowiedź, choć procesor serwera prawie nic nie robi. Żeby zrozumieć dlaczego, rozdziel dwa pytania: kto <b>obsługuje</b> żądanie (proces PHP) i kto w danej chwili <b>wykonuje</b> jego kod (rdzeń CPU).',
+      },
+      plan: {
+        en: 'First you follow a request through Nginx and PHP-FPM. Then you run a simulation with several customers and see how one request shares a CPU with another. Finally you check how the same state looks in <code>htop</code> on a Linux server.',
+        pl: 'Najpierw prześledzisz drogę żądania przez Nginx i PHP-FPM. Potem uruchomisz symulację z kilkoma klientami i zobaczysz, jak żądania dzielą się procesorem. Na koniec sprawdzisz, jak ten sam stan wygląda w <code>htop</code> na serwerze z Linuksem.',
+      },
+      terms: [
+        {
+          en: ['Process', 'A running program with its own memory. Every process has a number (PID) and shows up in <code>ps</code> or <code>htop</code>.'],
+          pl: ['Proces', 'Uruchomiony program z własną pamięcią. Każdy proces ma numer (PID) i widać go w <code>ps</code> albo <code>htop</code>.'],
+        },
+        {
+          en: ['PHP-FPM worker', 'A PHP process that PHP-FPM starts in advance and keeps in a pool. It handles one HTTP request at a time.'],
+          pl: ['Worker PHP-FPM', 'Proces PHP, który PHP-FPM uruchamia z wyprzedzeniem i trzyma w puli. Obsługuje jedno żądanie HTTP naraz.'],
+        },
+        {
+          en: ['CPU core', 'The part of the processor that executes instructions. Simplified: one core runs the code of one process at a time. <code>nproc</code> prints how many you have.'],
+          pl: ['Rdzeń CPU', 'Część procesora, która wykonuje instrukcje. W uproszczeniu jeden rdzeń w danej chwili wykonuje kod jednego procesu. Ich liczbę pokaże polecenie <code>nproc</code>.'],
+        },
+        {
+          en: ['I/O (input/output)', 'Waiting for something outside the CPU: a database reply, the disk or another service over the network. While it waits, a process does not need a core.'],
+          pl: ['I/O (wejście/wyjście)', 'Czekanie na coś spoza procesora: odpowiedź bazy danych, dysku albo innej usługi w sieci. W tym czasie proces nie potrzebuje rdzenia.'],
+        },
+        {
+          en: ['Concurrency and parallelism', 'Concurrent: several requests are in progress during the same period. Parallel: their code runs at the same instant, which needs several cores.'],
+          pl: ['Współbieżność i równoległość', 'Współbieżnie: kilka żądań jest w toku w tym samym okresie. Równolegle: ich kod wykonuje się w tej samej chwili, a do tego potrzeba kilku rdzeni.'],
+        },
+      ],
+      summaryTitle: { en: 'Summary: processes, cores and waiting', pl: 'Podsumowanie: procesy, rdzenie i czekanie' },
+      rules: {
+        en: [
+          'A PHP-FPM worker handles one request at a time and becomes free only when the script finishes.',
+          'Waiting for the database occupies a worker but not a core. In <code>htop</code> such a process is in state <code>S</code> and uses no CPU.',
+          'The number of cores limits how many processes run code at the same instant. The others stay in state <code>R</code> and wait their turn.',
+          'Concurrency means several requests in progress during the same period. Parallelism needs several cores.',
+          '<code>php -S</code> handles requests one by one in a single process, so it is for local development only.',
+        ],
+        pl: [
+          'Worker PHP-FPM obsługuje jedno żądanie naraz i zwalnia się dopiero wtedy, gdy skrypt skończy pracę.',
+          'Czekanie na bazę zajmuje workera, ale nie rdzeń. W <code>htop</code> taki proces ma stan <code>S</code> i nie zużywa CPU.',
+          'Liczba rdzeni ogranicza, ile procesów wykonuje kod w tej samej chwili. Pozostałe mają stan <code>R</code> i czekają na swoją kolej.',
+          'Współbieżność to kilka żądań w toku w tym samym okresie. Równoległość wymaga kilku rdzeni.',
+          '<code>php -S</code> obsługuje żądania po kolei w jednym procesie, więc nadaje się tylko do pracy lokalnej.',
+        ],
+      },
+      table: {
+        title: { en: 'What shortens the queue?', pl: 'Co skróci kolejkę?' },
+        head: ['', { en: 'More workers (pm.max_children)', pl: 'Więcej workerów (pm.max_children)' }, { en: 'More CPU cores', pl: 'Więcej rdzeni CPU' }],
+        rows: [
+          {
+            en: ['Requests mostly wait for the database (I/O)', 'Helps: more requests can wait at the same time.', 'Helps little: the cores are idle most of the time anyway.'],
+            pl: ['Żądania głównie czekają na bazę (I/O)', 'Pomaga: więcej żądań może czekać jednocześnie.', 'Pomaga niewiele: rdzenie i tak przez większość czasu stoją.'],
+          },
+          {
+            en: ['Requests mostly compute (CPU)', 'Does not help beyond the number of cores: extra workers wait in state R.', 'Helps: more requests compute at once.'],
+            pl: ['Żądania głównie liczą (CPU)', 'Nie pomaga ponad liczbę rdzeni: dodatkowe workery czekają w stanie R.', 'Pomaga: więcej żądań liczy jednocześnie.'],
+          },
+        ],
+        common: {
+          en: ['In both cases', 'Every worker uses RAM and, while it handles a request, usually one database connection. Server memory and PostgreSQL <code>max_connections</code> set the upper limit for <code>pm.max_children</code>.'],
+          pl: ['W obu przypadkach', 'Każdy worker zajmuje pamięć RAM, a podczas obsługi żądania zwykle także jedno połączenie z bazą. Górną granicę <code>pm.max_children</code> wyznaczają pamięć serwera i <code>max_connections</code> w PostgreSQL.'],
+        },
+      },
+      links: [
+        { en: ['PHP-FPM pool configuration', 'https://www.php.net/manual/en/install.fpm.configuration.php'], pl: ['Konfiguracja puli PHP-FPM', 'https://www.php.net/manual/en/install.fpm.configuration.php'] },
+        { en: ['PHP-FPM status page', 'https://www.php.net/manual/en/fpm.status.php'], pl: ['Strona statusu PHP-FPM', 'https://www.php.net/manual/en/fpm.status.php'] },
+        ['htop', 'https://htop.dev/'],
+        { en: ['ps(1): process state codes', 'https://man7.org/linux/man-pages/man1/ps.1.html'], pl: ['ps(1): kody stanów procesu', 'https://man7.org/linux/man-pages/man1/ps.1.html'] },
+      ],
+      next: { en: 'Next chapter: database locks →', pl: 'Następny rozdział: blokady w bazie →' },
+    },
+    locks: {
+      title: {
+        en: 'What happens when two requests change the same data?',
+        pl: 'Co się dzieje, gdy dwa żądania zmieniają te same dane?',
+      },
+      problem: {
+        en: 'In the previous chapter several FPM workers handled requests at the same time. That makes the application faster, but it brings a new problem. Suppose two requests read the same customer balance, and each adds its amount in PHP and saves the result. One of the changes disappears without any error. This chapter shows how the database helps prevent that and how to send events to other systems safely.',
+        pl: 'W poprzednim rozdziale kilka workerów FPM obsługiwało żądania jednocześnie. Dzięki temu aplikacja działa szybciej, ale pojawia się nowy problem. Załóżmy, że dwa żądania odczytują to samo saldo klienta, a potem każde dodaje w PHP swoją kwotę i zapisuje wynik. Jedna ze zmian znika bez żadnego błędu. Ten rozdział pokazuje, jak baza danych pomaga temu zapobiec i jak bezpiecznie wysyłać zdarzenia do innych systemów.',
+      },
+      plan: {
+        en: 'First you see a lost update and two ways to prevent it: optimistic and pessimistic locking. Then you compare them in SQL and Doctrine code. Finally you meet the transactional outbox pattern and check how several processes can share work without sending the same event twice.',
+        pl: 'Najpierw zobaczysz utraconą aktualizację i dwa sposoby ochrony: blokowanie optymistyczne i pesymistyczne. Potem porównasz je w kodzie SQL i Doctrine. Na koniec poznasz wzorzec transactional outbox i sprawdzisz, jak kilka procesów dzieli się pracą, nie wysyłając dwa razy tego samego zdarzenia.',
+      },
+      terms: [
+        {
+          en: ['Transaction', 'A group of statements between <code>BEGIN</code> and <code>COMMIT</code>. The database saves all of them or none.'],
+          pl: ['Transakcja', 'Grupa zapytań między <code>BEGIN</code> a <code>COMMIT</code>. Baza zapisuje wszystkie albo żadnego.'],
+        },
+        {
+          en: ['COMMIT and ROLLBACK', '<code>COMMIT</code> makes a transaction’s changes permanent and visible to other sessions. <code>ROLLBACK</code> discards them.'],
+          pl: ['COMMIT i ROLLBACK', '<code>COMMIT</code> zatwierdza zmiany transakcji i od tej chwili widzą je inne sesje. <code>ROLLBACK</code> je wycofuje.'],
+        },
+        {
+          en: ['Race condition', 'A bug whose result depends on which request gets there first. It appears only with an unlucky ordering, so tests easily miss it.'],
+          pl: ['Wyścig (race condition)', 'Błąd, którego wynik zależy od tego, które żądanie zdąży pierwsze. Pojawia się tylko przy pechowej kolejności, dlatego łatwo go przeoczyć w testach.'],
+        },
+        {
+          en: ['Row lock', 'A marker in the database that makes other transactions wait before they change or lock that row, until the current transaction ends.'],
+          pl: ['Blokada wiersza', 'Znacznik w bazie, przez który inne transakcje muszą poczekać ze zmianą lub zablokowaniem wiersza, aż bieżąca transakcja się skończy.'],
+        },
+        {
+          en: ['READ COMMITTED', 'PostgreSQL’s default isolation level. Each statement sees data committed before it started. It does not stop a lost update when the application first reads and then writes.'],
+          pl: ['READ COMMITTED', 'Domyślny poziom izolacji w PostgreSQL. Każde zapytanie widzi dane zatwierdzone przed jego startem. Nie chroni przed utraconą aktualizacją, gdy aplikacja najpierw czyta, a potem zapisuje.'],
+        },
+        {
+          en: ['Message broker', 'A separate system, for example RabbitMQ, that services use to pass events to each other. It keeps its own state, independent of the database.'],
+          pl: ['Broker wiadomości', 'Osobny system, np. RabbitMQ, przez który usługi przekazują sobie zdarzenia. Ma własny stan, niezależny od bazy danych.'],
+        },
+      ],
+      summaryTitle: { en: 'Summary: concurrent writes to the database', pl: 'Podsumowanie: współbieżne zapisy w bazie' },
+      rules: {
+        en: [
+          'Read, compute in PHP and write are three separate steps. When two requests interleave them, one change can vanish without an error: a lost update.',
+          'Optimistic locking stops nobody. The conflict shows up at the write, and the application has to re-read the data and check its rules again.',
+          'Pessimistic locking (<code>SELECT … FOR UPDATE</code>) makes the second request wait until <code>COMMIT</code>. Keep such a transaction short and free of network calls.',
+          'A simple increment fits in one atomic statement: <code>UPDATE … SET balance = balance + 10</code>.',
+          'The transactional outbox saves the event in the same transaction as the data. Relays share the work with <code>FOR UPDATE SKIP LOCKED</code>, and the consumer still has to skip duplicates.',
+        ],
+        pl: [
+          'Odczyt, obliczenie w PHP i zapis to trzy osobne kroki. Gdy dwa żądania je przeplotą, jedna zmiana może zniknąć bez błędu. To utracona aktualizacja.',
+          'Blokowanie optymistyczne nikogo nie zatrzymuje. Konflikt wychodzi przy zapisie, a aplikacja musi odczytać dane ponownie i jeszcze raz sprawdzić reguły.',
+          'Blokowanie pesymistyczne (<code>SELECT … FOR UPDATE</code>) każe drugiemu żądaniu czekać do <code>COMMIT</code>. Taka transakcja powinna być krótka i bez wywołań sieciowych.',
+          'Proste zwiększenie wartości zmieścisz w jednym atomowym zapytaniu: <code>UPDATE … SET balance = balance + 10</code>.',
+          'Transactional outbox zapisuje zdarzenie w tej samej transakcji co dane. Procesy relay dzielą się pracą dzięki <code>FOR UPDATE SKIP LOCKED</code>, a odbiorca i tak musi pomijać duplikaty.',
+        ],
+      },
+      table: [
+        {
+          title: { en: 'Three ways to protect the balance', pl: 'Trzy sposoby ochrony salda' },
+          head: ['', { en: 'No protection', pl: 'Bez ochrony' }, { en: 'Optimistic', pl: 'Optymistyczne' }, { en: 'Pessimistic', pl: 'Pesymistyczne' }],
+          rows: [
+            {
+              en: ['Result in the simulation', '120: A’s change is lost', '130', '130'],
+              pl: ['Wynik w symulacji', '120: zmiana A ginie', '130', '130'],
+            },
+            {
+              en: ['What the second request does', 'Overwrites the first result', 'Gets a conflict, re-reads and retries', 'Waits for the lock, then reads the current value'],
+              pl: ['Co robi drugie żądanie', 'Nadpisuje wynik pierwszego', 'Dostaje konflikt, czyta ponownie i ponawia zapis', 'Czeka na blokadę, potem czyta aktualną wartość'],
+            },
+            {
+              en: ['SQL', '—', '<code>UPDATE … WHERE version = :v</code>', '<code>SELECT … FOR UPDATE</code>'],
+              pl: ['SQL', '—', '<code>UPDATE … WHERE version = :v</code>', '<code>SELECT … FOR UPDATE</code>'],
+            },
+            {
+              en: ['Doctrine', '—', '<code>#[ORM\\Version]</code>', '<code>LockMode::PESSIMISTIC_WRITE</code>'],
+              pl: ['Doctrine', '—', '<code>#[ORM\\Version]</code>', '<code>LockMode::PESSIMISTIC_WRITE</code>'],
+            },
+            {
+              en: ['When to choose it', 'Never for a write that depends on a read', 'Conflicts are rare, for example editing a form', 'Conflicts are frequent and the operation is short, for example a balance or a stock level'],
+              pl: ['Kiedy wybrać', 'Nigdy przy zapisie zależnym od odczytu', 'Konflikty są rzadkie, np. edycja formularza', 'Konflikty są częste, a operacja krótka, np. saldo albo stan magazynu'],
+            },
+            {
+              en: ['Cost', 'Wrong data with no error message', 'A retry after a conflict', 'Other requests wait; with several locks there is a risk of deadlock'],
+              pl: ['Koszt', 'Błędne dane bez komunikatu o błędzie', 'Ponowienie po konflikcie', 'Inne żądania czekają; przy kilku blokadach grozi zakleszczenie'],
+            },
+          ],
+          common: {
+            en: ['In common', 'The race happens in the database, so it threatens PHP-FPM, ReactPHP and Node.js alike, no matter how many processes run.'],
+            pl: ['Wspólne', 'Wyścig powstaje w bazie, więc tak samo grozi w PHP-FPM, ReactPHP i Node.js, niezależnie od liczby procesów.'],
+          },
+        },
+        {
+          title: { en: 'Outbox: three ways to fetch events', pl: 'Outbox: trzy sposoby pobierania zdarzeń' },
+          head: ['', { en: 'No lock', pl: 'Bez blokady' }, 'FOR UPDATE', 'FOR UPDATE SKIP LOCKED'],
+          rows: [
+            {
+              en: ['What relay B does', 'Takes the same event #101', 'Waits for the lock on #101, then takes #102', 'Skips #101 and takes #102 at once'],
+              pl: ['Co robi relay B', 'Bierze to samo zdarzenie #101', 'Czeka na blokadę #101, potem bierze #102', 'Pomija #101 i od razu bierze #102'],
+            },
+            {
+              en: ['Duplicates in this run', '2 extra copies of #101', 'None', 'None'],
+              pl: ['Duplikaty w tym przebiegu', '2 dodatkowe kopie #101', 'Brak', 'Brak'],
+            },
+            {
+              en: ['Claiming three events', 'No claim at all', 'Longer: relays wait in turn', 'Short: all three at once'],
+              pl: ['Przydział trzech zdarzeń', 'Brak przydziału', 'Dłuższy: relaye czekają po kolei', 'Krótki: wszystkie trzy naraz'],
+            },
+          ],
+          common: {
+            en: ['In common', 'A crash after sending but before saving <code>published</code> can cause a resend. The consumer deduplicates by event ID.'],
+            pl: ['Wspólne', 'Awaria po wysłaniu, a przed zapisem <code>published</code>, może spowodować ponowną wysyłkę. Odbiorca deduplikuje po ID zdarzenia.'],
+          },
+        },
+      ],
+      links: [
+        ['PostgreSQL: Explicit Locking', 'https://www.postgresql.org/docs/current/explicit-locking.html'],
+        ['PostgreSQL: Transaction Isolation', 'https://www.postgresql.org/docs/current/transaction-iso.html'],
+        ['PostgreSQL: pg_stat_activity', 'https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-ACTIVITY-VIEW'],
+        ['Doctrine: Transactions and Concurrency', 'https://www.doctrine-project.org/projects/doctrine-orm/en/current/reference/transactions-and-concurrency.html'],
+        ['microservices.io: Transactional outbox', 'https://microservices.io/patterns/data/transactional-outbox.html'],
+      ],
+      next: { en: 'Next chapter: event loops →', pl: 'Następny rozdział: pętle zdarzeń →' },
+    },
+    node: {
+      title: {
+        en: 'What does a process do while it waits for the database?',
+        pl: 'Co robi proces, gdy czeka na bazę danych?',
+      },
+      problem: {
+        en: 'In chapter 01 an FPM worker sat idle while it waited for PostgreSQL, yet it could not take another request. Runtimes such as Node.js and ReactPHP use that time differently: one process sends the query and moves straight on to the next request. This chapter compares four approaches on the same machine and shows when that difference pays off and when it gains nothing.',
+        pl: 'W rozdziale 01 worker FPM bezczynnie czekał na PostgreSQL, a mimo to nie mógł przyjąć innego żądania. Środowiska takie jak Node.js i ReactPHP wykorzystują ten czas inaczej: jeden proces wysyła zapytanie i od razu zajmuje się kolejnym żądaniem. Ten rozdział porównuje cztery podejścia na tej samej maszynie i pokazuje, kiedy ta różnica się opłaca, a kiedy nic nie daje.',
+      },
+      example: {
+        en: 'A waiter who takes an order and then stands by the kitchen until the dish is ready serves one table at a time. That is an FPM worker. A waiter who takes orders at other tables in the meantime is an event loop. The cook works at the same speed either way, so the second waiter gains time only when the first one would be standing idle.',
+        pl: 'Kelner, który przyjmuje zamówienie i stoi przy kuchni, aż danie będzie gotowe, obsługuje jeden stolik naraz. Tak działa worker FPM. Kelner, który w tym czasie przyjmuje zamówienia przy innych stolikach, to pętla zdarzeń. Kucharz gotuje w tym samym tempie, więc drugi kelner zyskuje czas tylko wtedy, gdy pierwszy stałby bezczynnie.',
+      },
+      plan: {
+        en: 'First look at how an event loop works. Then run the comparison: four timelines share one clock, and each scenario changes one thing for all of them. The summary puts the four approaches in one table.',
+        pl: 'Najpierw zobacz, jak działa pętla zdarzeń. Potem uruchom porównanie: cztery wykresy mają wspólny zegar, a każdy scenariusz zmienia jedną rzecz dla wszystkich. Podsumowanie zestawia cztery podejścia w jednej tabeli.',
+      },
+      terms: [
+        {
+          en: ['Blocking I/O', 'The call returns only with the result, for example a PDO query. Until then the process does nothing else.'],
+          pl: ['Blokujące I/O', 'Funkcja wraca dopiero z wynikiem, np. zapytanie przez PDO. Do tego czasu proces nie robi nic innego.'],
+        },
+        {
+          en: ['Non-blocking I/O', 'The call sends the query and returns at once. The result arrives later as an event.'],
+          pl: ['Nieblokujące I/O', 'Funkcja wysyła zapytanie i od razu wraca. Wynik przyjdzie później jako zdarzenie.'],
+        },
+        {
+          en: ['Event loop', 'A loop inside one process that runs handler code for ready events one at a time: new requests and database replies.'],
+          pl: ['Pętla zdarzeń', 'Pętla w jednym procesie, która po kolei uruchamia kod obsługi gotowych zdarzeń: nowych żądań i odpowiedzi z bazy.'],
+        },
+        {
+          en: ['Promise and await', 'A promise stands for a future result. <code>await</code> pauses the current handler until the result arrives, while the loop handles other events.'],
+          pl: ['Promise i await', 'Promise to obietnica przyszłego wyniku. <code>await</code> wstrzymuje bieżący handler do czasu wyniku, a pętla w tym czasie obsługuje inne zdarzenia.'],
+        },
+        {
+          en: ['Fiber', 'A PHP 8.1 feature that pauses a function midway and resumes it later. It lets asynchronous PHP code read from top to bottom.'],
+          pl: ['Fiber', 'Mechanizm PHP 8.1, który wstrzymuje funkcję w połowie i wznawia ją później. Dzięki niemu asynchroniczny kod PHP czyta się z góry na dół.'],
+        },
+      ],
+      diagramTitle: { en: 'How an event loop works', pl: 'Jak działa pętla zdarzeń' },
+      loop: [
+        { en: ['Event', 'A new HTTP request or a database reply'], pl: ['Zdarzenie', 'Nowe żądanie HTTP albo odpowiedź z bazy'] },
+        { en: ['Queue', 'Ready events wait their turn'], pl: ['Kolejka', 'Gotowe zdarzenia czekają na swoją kolej'] },
+        { en: ['The loop runs a handler', 'The code runs to the end or to the first <code>await</code>'], pl: ['Pętla uruchamia handler', 'Kod działa do końca albo do pierwszego <code>await</code>'] },
+        { en: ['Query in flight', 'The database works while the loop picks the next event'], pl: ['Zapytanie w toku', 'Baza pracuje, a pętla bierze następne zdarzenie'] },
+      ],
+      loopReturn: {
+        en: 'When the database replies, the operating system tells the loop, and the reply becomes a new event.',
+        pl: 'Gdy baza odpowie, system operacyjny powiadamia pętlę, a odpowiedź staje się nowym zdarzeniem.',
+      },
+      loopContrast: {
+        en: 'An FPM worker has no such loop. After sending a query it sleeps until the reply arrives and only then runs the rest of the code.',
+        pl: 'Worker FPM nie ma takiej pętli. Po wysłaniu zapytania śpi, aż przyjdzie odpowiedź, i dopiero wtedy wykonuje resztę kodu.',
+      },
+      summaryTitle: { en: 'Summary: waiting versus computing', pl: 'Podsumowanie: czekanie a liczenie' },
+      rules: {
+        en: [
+          'An FPM worker waits together with its request. With many database queries you need more workers to serve more customers at once.',
+          'Fibers shorten one request that has several independent queries, but the worker still serves only that request.',
+          'An event loop (ReactPHP, Node.js) serves many requests in one process, as long as every I/O client is non-blocking. A single PDO call stops the whole loop.',
+          'With pure computation all four approaches finish together: the number of cores sets the pace.',
+          'No approach removes database races. Shared data needs the protection from chapter 02.',
+        ],
+        pl: [
+          'Worker FPM czeka razem ze swoim żądaniem. Przy wielu zapytaniach do bazy potrzeba więcej workerów, żeby obsłużyć więcej klientów naraz.',
+          'Fibers skracają jedno żądanie, które ma kilka niezależnych zapytań, ale worker nadal obsługuje tylko to żądanie.',
+          'Pętla zdarzeń (ReactPHP, Node.js) obsługuje wiele żądań w jednym procesie, o ile każdy klient I/O jest nieblokujący. Jedno wywołanie PDO zatrzymuje całą pętlę.',
+          'Przy samych obliczeniach wszystkie cztery podejścia kończą razem: tempo wyznacza liczba rdzeni.',
+          'Żadne podejście nie usuwa wyścigów w bazie. Wspólne dane trzeba chronić tak jak w rozdziale 02.',
+        ],
+      },
+      table: {
+        title: { en: 'The four approaches side by side', pl: 'Cztery podejścia w jednym zestawieniu' },
+        head: ['', 'PHP-FPM', 'PHP-FPM + Fibers', 'ReactPHP', 'Node.js'],
+        rows: [
+          {
+            en: ['Requests at once in one process', '1', '1', 'Many', 'Many'],
+            pl: ['Żądania naraz w jednym procesie', '1', '1', 'Wiele', 'Wiele'],
+          },
+          {
+            en: ['While a request waits for the database', 'The worker sleeps', 'The worker waits, but other queries of the same request can be in flight', 'The loop serves other requests', 'The loop serves other requests'],
+            pl: ['Gdy żądanie czeka na bazę', 'Worker śpi', 'Worker czeka, ale inne zapytania tego żądania mogą być w toku', 'Pętla obsługuje inne żądania', 'Pętla obsługuje inne żądania'],
+          },
+          {
+            en: ['Last response, scenario 01', '21', '21', '9', '9'],
+            pl: ['Ostatnia odpowiedź, scenariusz 01', '21', '21', '9', '9'],
+          },
+          {
+            en: ['Last response, scenario 02', '36', '21', '9', '9'],
+            pl: ['Ostatnia odpowiedź, scenariusz 02', '36', '21', '9', '9'],
+          },
+          {
+            en: ['With a blocking driver (PDO)', 'Works as usual', 'Loses its advantage', 'Blocks the whole loop', 'Blocks the whole loop'],
+            pl: ['Z blokującym sterownikiem (PDO)', 'Działa jak zwykle', 'Traci przewagę', 'Blokuje całą pętlę', 'Blokuje całą pętlę'],
+          },
+          {
+            en: ['What ps shows', 'master + <code>php-fpm: pool www</code>', 'Same as PHP-FPM', '<code>php server.php</code> × 2', '<code>node server.js</code>: primary + workers'],
+            pl: ['Co pokaże ps', 'master + <code>php-fpm: pool www</code>', 'To samo co PHP-FPM', '<code>php server.php</code> × 2', '<code>node server.js</code>: primary + workery'],
+          },
+        ],
+        common: {
+          en: ['In common', 'The number of cores limits computation, and shared data in the database needs a lock or a version check.'],
+          pl: ['Wspólne', 'Obliczenia ogranicza liczba rdzeni, a wspólne dane w bazie wymagają blokady lub kontroli wersji.'],
+        },
+      },
+      links: [
+        ['Node.js: The Event Loop', 'https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick'],
+        ['PHP: Fibers', 'https://www.php.net/manual/en/language.fibers.php'],
+        ['ReactPHP', 'https://reactphp.org/'],
+        ['AMPHP', 'https://amphp.org/'],
+      ],
+      next: { en: 'Next chapter: immediate consistency →', pl: 'Następny rozdział: spójność natychmiastowa →' },
+    },
+    aggregate: {
+      title: {
+        en: 'How do you keep a business rule when two requests change the same order?',
+        pl: 'Jak pilnować reguły biznesowej, gdy dwa żądania zmieniają to samo zamówienie?',
+      },
+      problem: {
+        en: 'In chapter 02 we protected one number, a balance. In a real application a rule often spans several objects. For example, an order may have at most two items. <code>Order::addItem()</code> checks the limit, but it does so on a copy of the data in PHP memory. If two requests check the limit at the same moment, both decide there is room, and the database ends up with three items. Domain-Driven Design (DDD) calls such a group of objects an <em>aggregate</em> and protects it as a whole.',
+        pl: 'W rozdziale 02 chroniliśmy jedną liczbę: saldo. W prawdziwej aplikacji reguła często obejmuje kilka obiektów. Na przykład zamówienie może mieć najwyżej dwie pozycje. Metoda <code>Order::addItem()</code> sprawdza limit, ale robi to na kopii danych w pamięci PHP. Jeśli dwa żądania sprawdzą limit w tej samej chwili, oba uznają, że jest miejsce, i w bazie znajdą się trzy pozycje. Domain-Driven Design (DDD) nazywa taką grupę obiektów <em>agregatem</em> i chroni ją jako całość.',
+      },
+      plan: {
+        en: 'First run the experiment with and without a version check. Then look at the boundary map to see how an aggregate differs from a bounded context. Finally compare the data in PHP memory with the committed state in the database.',
+        pl: 'Najpierw uruchom eksperyment z kontrolą wersji i bez niej. Potem spójrz na mapę granic i zobacz, czym agregat różni się od kontekstu ograniczonego. Na końcu porównaj dane w pamięci PHP ze stanem zatwierdzonym w bazie.',
+      },
+      terms: [
+        {
+          en: ['Aggregate', 'A group of objects that change together, such as an order and its items. You save it in one transaction.'],
+          pl: ['Agregat', 'Grupa obiektów, które zmieniają się razem, np. zamówienie i jego pozycje. Zapisujesz ją w jednej transakcji.'],
+        },
+        {
+          en: ['Aggregate root', 'The main object of the aggregate, here <code>Order</code>. Outside code changes items only through its methods, so the root can enforce the rules.'],
+          pl: ['Korzeń agregatu', 'Główny obiekt agregatu, tutaj <code>Order</code>. Kod z zewnątrz zmienia pozycje tylko przez jego metody, więc korzeń może pilnować reguł.'],
+        },
+        {
+          en: ['Invariant', 'A rule that must hold after every <code>COMMIT</code>, for example “at most two items”.'],
+          pl: ['Niezmiennik', 'Reguła, która musi być prawdziwa po każdym <code>COMMIT</code>, np. „najwyżej dwie pozycje”.'],
+        },
+        {
+          en: ['Immediate consistency', 'The rule holds right after the transaction commits. Nobody ever sees a saved state that breaks it.'],
+          pl: ['Spójność natychmiastowa', 'Reguła jest spełniona od razu po zatwierdzeniu transakcji. Nikt nigdy nie zobaczy zapisanego stanu, który ją łamie.'],
+        },
+        {
+          en: ['Bounded context', 'A larger area of the system with its own model and vocabulary, such as Ordering. It contains many aggregates and is not one transaction.'],
+          pl: ['Kontekst ograniczony', 'Większy obszar systemu z własnym modelem i słownictwem, np. Ordering. Zawiera wiele agregatów i nie jest jedną transakcją.'],
+        },
+      ],
+      summaryTitle: { en: 'Summary: the aggregate boundary', pl: 'Podsumowanie: granica agregatu' },
+      rules: {
+        en: [
+          'An aggregate is the boundary within which a business rule must hold after every <code>COMMIT</code>.',
+          'A rule check in a domain method works on an in-memory copy. Without a version check or a lock, two requests can slip past it.',
+          'Change items only through the root, and save the root with its version even when only a child changes. Adding an element to a collection does not bump the <code>Order</code> version by itself.',
+          'After a conflict, reload the aggregate and check the rule again. A blind retry of the write would break the limit.',
+          'Rule of thumb: one transaction changes one aggregate. Pass changes to other aggregates and services through events, which is the topic of chapter 05.',
+        ],
+        pl: [
+          'Agregat to granica, w której reguła biznesowa musi być prawdziwa po każdym <code>COMMIT</code>.',
+          'Sprawdzenie reguły w metodzie domenowej działa na kopii w pamięci. Bez kontroli wersji lub blokady dwa żądania mogą je obejść.',
+          'Zmieniaj pozycje tylko przez korzeń i zapisuj korzeń z wersją, nawet gdy zmienia się tylko pozycja. Samo dodanie elementu do kolekcji nie podbije wersji <code>Order</code>.',
+          'Po konflikcie wczytaj agregat ponownie i jeszcze raz sprawdź regułę. Ślepe ponowienie zapisu złamałoby limit.',
+          'Zasada praktyczna: jedna transakcja zmienia jeden agregat. Zmiany w innych agregatach i usługach przekazuj zdarzeniami. O tym jest rozdział 05.',
+        ],
+      },
+      table: {
+        title: { en: 'The experiment side by side', pl: 'Eksperyment w jednym zestawieniu' },
+        head: ['', { en: 'Version check ON', pl: 'Kontrola wersji włączona' }, { en: 'Without version check', pl: 'Bez kontroli wersji' }],
+        rows: [
+          {
+            en: ['Request B’s write', 'Rejected: the row is already at v6', 'Accepted despite stale data'],
+            pl: ['Zapis żądania B', 'Odrzucony: wiersz ma już wersję v6', 'Przyjęty mimo nieaktualnych danych'],
+          },
+          {
+            en: ['Items in the database', '2 of 2', '3 with a limit of 2'],
+            pl: ['Pozycje w bazie', '2 z 2', '3 przy limicie 2'],
+          },
+          {
+            en: ['What customer B sees', 'A message that the order is full', 'Success, although the rule is broken'],
+            pl: ['Co widzi klient B', 'Komunikat, że zamówienie jest pełne', 'Sukces, choć reguła została złamana'],
+          },
+        ],
+        common: {
+          en: ['In common', 'Both variants run the same <code>addItem()</code> method and the same in-memory limit check. Only the <code>WHERE version = …</code> condition on the write differs.'],
+          pl: ['Wspólne', 'Oba warianty wykonują tę samą metodę <code>addItem()</code> i to samo sprawdzenie limitu w pamięci. Różni je tylko warunek <code>WHERE version = …</code> przy zapisie.'],
+        },
+      },
+      links: [
+        ['Martin Fowler: DDD Aggregate', 'https://martinfowler.com/bliki/DDD_Aggregate.html'],
+        ['Vaughn Vernon: Effective Aggregate Design', 'https://www.dddcommunity.org/library/vernon_2011/'],
+        ['Doctrine: Transactions and Concurrency', 'https://www.doctrine-project.org/projects/doctrine-orm/en/current/reference/transactions-and-concurrency.html'],
+      ],
+      next: { en: 'Next chapter: eventual consistency →', pl: 'Następny rozdział: spójność ostateczna →' },
+    },
+    saga: {
+      title: {
+        en: 'What if one operation spans several services with separate databases?',
+        pl: 'Co zrobić, gdy jedna operacja obejmuje kilka usług z osobnymi bazami?',
+      },
+      problem: {
+        en: 'Placing an order takes four services: Orders, Inventory, Payments and Shipping. Each has its own database, so one transaction cannot cover them and there is no single <code>ROLLBACK</code> when something fails. If Shipping fails after the money was taken, the system has to undo the earlier steps with new operations. Such a process is called a Saga, and the state it eventually reaches is called eventual consistency.',
+        pl: 'Złożenie zamówienia to praca czterech usług: Zamówień, Magazynu, Płatności i Wysyłki. Każda ma własną bazę, więc jedna transakcja ich nie obejmie i w razie błędu nie ma jednego <code>ROLLBACK</code>. Jeśli Wysyłka zawiedzie, gdy pieniądze są już pobrane, system musi cofnąć wcześniejsze kroki nowymi operacjami. Taki proces to Saga, a stan, do którego w końcu dochodzi, nazywamy spójnością ostateczną.',
+      },
+      example: {
+        en: 'You plan a trip and book a flight, a hotel and a car on three different websites. When the car rental says no, you cannot turn back time. You cancel the hotel and the flight separately, and each cancellation is a new operation that can also fail.',
+        pl: 'Planujesz wyjazd i rezerwujesz lot, hotel i samochód na trzech różnych stronach. Gdy wypożyczalnia odmówi, nie cofniesz czasu. Odwołujesz hotel i lot osobno, a każde odwołanie to nowa operacja, która też może się nie udać.',
+      },
+      plan: {
+        en: 'Run the variant in which shipping fails and watch the coordinator undo the earlier steps. Then compare it with the variant in which everything succeeds. The summary puts immediate and eventual consistency side by side.',
+        pl: 'Uruchom wariant z błędem wysyłki i obserwuj, jak koordynator cofa wcześniejsze kroki. Potem porównaj go z wariantem, w którym wszystko się udaje. Podsumowanie zestawia spójność natychmiastową i ostateczną.',
+      },
+      terms: [
+        {
+          en: ['Local transaction', 'A transaction in one service’s database. Another service cannot roll it back.'],
+          pl: ['Transakcja lokalna', 'Transakcja w bazie jednej usługi. Inna usługa nie może jej wycofać.'],
+        },
+        {
+          en: ['Saga', 'A process made of consecutive local transactions. A coordinator, also called an orchestrator, sends commands and reacts to the results.'],
+          pl: ['Saga', 'Proces złożony z kolejnych transakcji lokalnych. Koordynator, nazywany też orkiestratorem, wysyła polecenia i reaguje na wyniki.'],
+        },
+        {
+          en: ['Compensation', 'A new operation that reverses the effect of an earlier step, for example a refund after a charge.'],
+          pl: ['Kompensacja', 'Nowa operacja, która odwraca skutek wcześniejszego kroku, np. zwrot pieniędzy po ich pobraniu.'],
+        },
+        {
+          en: ['Eventual consistency', 'For a while the services disagree. Once every step and compensation has run, the system reaches a consistent outcome.'],
+          pl: ['Spójność ostateczna', 'Przez pewien czas usługi mają różne stany. Gdy wykonają się wszystkie kroki i kompensacje, system dochodzi do spójnego wyniku.'],
+        },
+        {
+          en: ['Idempotency', 'Processing the same message again does not change the outcome. For example, it does not charge the card twice.'],
+          pl: ['Idempotencja', 'Ponowne przetworzenie tego samego komunikatu nie zmienia wyniku. Na przykład nie obciąża karty drugi raz.'],
+        },
+      ],
+      summaryTitle: {
+        en: 'Summary: immediate versus eventual consistency',
+        pl: 'Podsumowanie: spójność natychmiastowa a ostateczna',
+      },
+      rules: {
+        en: [
+          'When data has different owners and separate databases, there is no single transaction and no single <code>ROLLBACK</code>.',
+          'A Saga splits the process into local transactions. Compensations, which are new business operations, repair a failure in a later step.',
+          'Intermediate states are normal. The interface should show them honestly, for example “Order in progress”, instead of pretending that everything has already happened.',
+          'Messages have to survive crashes (an outbox), and consumers have to be idempotent, because the same message can arrive twice.',
+          'Each service still protects its own data from races, like the aggregate in chapter 04.',
+        ],
+        pl: [
+          'Gdy dane mają różnych właścicieli i osobne bazy, nie ma jednej transakcji ani jednego <code>ROLLBACK</code>.',
+          'Saga dzieli proces na transakcje lokalne. Błąd w późniejszym kroku naprawiają kompensacje, czyli nowe operacje biznesowe.',
+          'Stany pośrednie są normalne. Interfejs powinien uczciwie je pokazywać, np. „Zamówienie w realizacji”, zamiast udawać, że wszystko już się stało.',
+          'Komunikaty muszą przetrwać awarie (outbox), a odbiorcy muszą być idempotentni, bo ten sam komunikat może przyjść dwa razy.',
+          'Każda usługa nadal chroni własne dane przed wyścigiem, tak jak agregat w rozdziale 04.',
+        ],
+      },
+      practice: {
+        en: 'In Symfony the Saga steps run in <code>bin/console messenger:consume</code> processes. <code>bin/console messenger:stats</code> shows how many messages wait in each transport, and <code>bin/console messenger:failed:show</code> lists the ones that failed.',
+        pl: 'W Symfony kroki Sagi wykonują procesy <code>bin/console messenger:consume</code>. Polecenie <code>bin/console messenger:stats</code> pokaże, ile komunikatów czeka w każdym transporcie, a <code>bin/console messenger:failed:show</code> wypisze te, które się nie udały.',
+      },
+      table: {
+        title: { en: 'Two kinds of consistency side by side', pl: 'Dwa rodzaje spójności w jednym zestawieniu' },
+        head: ['', { en: 'Immediate (chapter 04)', pl: 'Natychmiastowa (rozdział 04)' }, { en: 'Eventual (chapter 05)', pl: 'Ostateczna (rozdział 05)' }],
+        rows: [
+          {
+            en: ['Scope', 'One aggregate in one database', 'Several services, each with its own database'],
+            pl: ['Zakres', 'Jeden agregat w jednej bazie', 'Kilka usług, każda z własną bazą'],
+          },
+          {
+            en: ['Transactions', 'One', 'One per step and one per compensation'],
+            pl: ['Liczba transakcji', 'Jedna', 'Po jednej na każdy krok i każdą kompensację'],
+          },
+          {
+            en: ['When the rule holds', 'Right after <code>COMMIT</code>', 'When the whole process ends'],
+            pl: ['Kiedy reguła jest spełniona', 'Od razu po <code>COMMIT</code>', 'Gdy skończy się cały proces'],
+          },
+          {
+            en: ['On failure', '<code>ROLLBACK</code> undoes everything', 'Compensations undo earlier steps'],
+            pl: ['Co przy błędzie', '<code>ROLLBACK</code> wycofuje wszystko', 'Kompensacje cofają wcześniejsze kroki'],
+          },
+          {
+            en: ['Intermediate states', 'Invisible to others', 'Visible, for example money taken but no shipment'],
+            pl: ['Stany pośrednie', 'Niewidoczne dla innych', 'Widoczne, np. pieniądze pobrane, a przesyłki brak'],
+          },
+          {
+            en: ['Tools', 'A transaction plus a version check or a lock', 'Outbox, retries, idempotency, stored Saga state'],
+            pl: ['Narzędzia', 'Transakcja oraz kontrola wersji lub blokada', 'Outbox, ponowienia, idempotencja, zapisany stan Sagi'],
+          },
+        ],
+        common: {
+          en: ['In common', 'In both cases every single transaction has to be correct and safe from races.'],
+          pl: ['Wspólne', 'W obu przypadkach każda pojedyncza transakcja musi być poprawna i odporna na wyścigi.'],
+        },
+      },
+      links: [
+        ['microservices.io: Saga', 'https://microservices.io/patterns/data/saga.html'],
+        ['Microsoft Learn: Saga design pattern', 'https://learn.microsoft.com/en-us/azure/architecture/patterns/saga'],
+        ['Symfony Messenger', 'https://symfony.com/doc/current/messenger.html'],
+        ['Garcia-Molina, Salem: Sagas (1987, PDF)', 'https://www.cs.cornell.edu/andru/cs711/2002fa/reading/sagas.pdf'],
+      ],
+      next: { en: 'Back to chapter 01 ↺', pl: 'Wróć do rozdziału 01 ↺' },
+    },
+  },
+  // Chapter 01: the request simulation as seen in htop and on the PHP-FPM status page.
+  linux: {
+    overline: { en: 'Observe in Linux', pl: 'Podgląd w Linuksie' },
+    title: { en: 'The same moment in htop', pl: 'Ten sam moment w htop' },
+    lead: {
+      en: 'A server has no timeline, but it does show its processes. This view shows what <code>htop</code> would display on an Ubuntu 24.04 server with PHP 8.3 at the moment selected in the request simulation, next to the PHP-FPM status page. The buttons drive that simulation’s clock, so a step here also moves the simulation above. The button in the top right corner opens this view in a side window, so you can compare it with the simulation without scrolling.',
+      pl: 'Serwer nie pokaże osi czasu, ale pokaże procesy. Ten widok odtwarza, co wyświetliłby <code>htop</code> na serwerze z Ubuntu 24.04 i PHP 8.3 w chwili wybranej w symulacji żądań, a obok stronę statusu PHP-FPM. Przyciski sterują zegarem tamtej symulacji, więc krok wykonany tutaj zmienia też symulację powyżej. Przycisk w prawym górnym rogu otwiera ten widok w oknie obok, żeby porównywać go z symulacją bez przewijania.',
+    },
+    chip: { en: 'Mock-up · Ubuntu 24.04 · PHP 8.3', pl: 'Makieta · Ubuntu 24.04 · PHP 8.3' },
+    config: {
+      en: '{env} · workers: {workers} · cores: {cores} · {load}',
+      pl: '{env} · workery: {workers} · rdzenie: {cores} · {load}',
+    },
+    htopTitle: { en: 'htop · filter (F4): php · tree view (F5)', pl: 'htop · filtr (F4): php · widok drzewa (F5)' },
+    statusTitle: { en: 'PHP-FPM status page', pl: 'Strona statusu PHP-FPM' },
+    notes: {
+      master: { en: 'supervises the workers; handles no requests', pl: 'nadzoruje workery, sam nie obsługuje żądań' },
+      cpu: { en: '{id}: executes PHP', pl: '{id}: wykonuje PHP' },
+      ready: { en: '{id}: ready, waiting for a free core', pl: '{id}: gotowy, czeka na wolny rdzeń' },
+      io: { en: '{id}: sleeps in poll(), waiting for PostgreSQL', pl: '{id}: śpi w poll(), czeka na PostgreSQL' },
+      idle: { en: 'free: waits in accept() for a request', pl: 'wolny: czeka w accept() na żądanie' },
+      coreBusy: { en: 'runs {id}', pl: 'wykonuje {id}' },
+      coreIdle: { en: 'idle', pl: 'bezczynny' },
+      same: { en: '= “{label}” in the simulation', pl: '= „{label}” w symulacji' },
+      idleWorkers: { en: 'free workers', pl: 'wolne workery' },
+      accepted: { en: 'requests taken by workers so far', pl: 'żądania przyjęte dotąd przez workery' },
+    },
+    builtinStatus: {
+      en: 'php -S has no status page. Waiting requests sit in the socket backlog of its single process.',
+      pl: 'php -S nie ma strony statusu. Czekające żądania stoją w kolejce gniazda jego jedynego procesu.',
+    },
+    legend: {
+      en: [
+        '<b>Column S</b> is the process state. <code>R</code> means the process is running or queued for a core. <code>S</code> means it sleeps: it waits for I/O or for a new request and uses no CPU.',
+        '<b>The numbered bars</b> are the cores. htop usually counts them from zero (a setting controls this), so “CPU core 1” in the simulation is <code>0</code> here.',
+        '<b>Tasks</b> counts every process on the system, not only the filtered ones, and <code>thr</code> counts their extra threads. <b>running</b> counts processes in state <code>R</code>, including htop itself while it reads the data. When it stays above the number of cores, the server is short of CPU.',
+        '<b>Load average</b> is the average number of processes in state <code>R</code> or <code>D</code> (uninterruptible wait, usually for the disk) over the last 1, 5 and 15 minutes. The mock-up assumes the selected scenario ran for the last minute. Waiting for PostgreSQL over the network is state <code>S</code>, so it does not raise this number.',
+        '<b>RES</b> is the physical memory of a process in KiB, including the shared part <code>SHR</code> (such as OPcache), and <b>MEM%</b> is its share of RAM. Each worker also has memory of its own, so <code>pm.max_children</code> depends on the server’s RAM. <b>TIME+</b> is the total CPU time of a process and grows only for a worker that computes.',
+        '<b>CPU%</b> in this mock-up covers one time unit. Real htop averages over about 1.5 seconds, so two processes sharing one core show about 50% each.',
+        '<b>The status page</b> shows counters kept by PHP-FPM itself. <code>listen queue</code> counts requests waiting for a free worker, and <code>max listen queue</code> the longest queue since the start.',
+        '<b>The mock-up pool differs from Ubuntu’s default.</b> It matches <code>pm = static</code> and <code>listen = 127.0.0.1:9000</code>. The default <code>www.conf</code> has <code>pm = dynamic</code>, where FPM starts and stops workers up to <code>pm.max_children</code>, and the Unix socket <code>/run/php/php8.3-fpm.sock</code>, with which <code>listen queue</code> may stay at 0. <code>max children reached</code> counts only with <code>pm = dynamic</code> and <code>ondemand</code>.',
+      ],
+      pl: [
+        '<b>Kolumna S</b> to stan procesu. <code>R</code> znaczy, że proces pracuje albo czeka w kolejce do rdzenia. <code>S</code> znaczy, że śpi: czeka na I/O lub na nowe żądanie i nie zużywa CPU.',
+        '<b>Ponumerowane paski</b> to rdzenie. htop zwykle liczy je od zera (decyduje o tym ustawienie), więc „Rdzeń CPU 1” z symulacji to tutaj <code>0</code>.',
+        '<b>Tasks</b> liczy wszystkie procesy w systemie, nie tylko te z filtra, a <code>thr</code> to ich dodatkowe wątki. <b>running</b> to procesy w stanie <code>R</code>, łącznie z samym htop w chwili odczytu. Gdy ta liczba stale przekracza liczbę rdzeni, serwerowi brakuje CPU.',
+        '<b>Load average</b> to średnia liczba procesów w stanie <code>R</code> lub <code>D</code> (nieprzerywalne czekanie, zwykle na dysk) z ostatnich 1, 5 i 15 minut. Makieta zakłada, że wybrany scenariusz trwał przez ostatnią minutę. Czekanie na PostgreSQL przez sieć to stan <code>S</code>, więc nie podnosi tej liczby.',
+        '<b>RES</b> to pamięć fizyczna procesu w KiB, łącznie ze współdzieloną częścią <code>SHR</code> (np. OPcache), a <b>MEM%</b> to jej udział w RAM. Każdy worker ma też pamięć tylko dla siebie, dlatego <code>pm.max_children</code> zależy od RAM serwera. <b>TIME+</b> to łączny czas CPU procesu i rośnie tylko u workera, który liczy.',
+        '<b>CPU%</b> w tej makiecie dotyczy jednej jednostki czasu. Prawdziwy htop uśrednia pomiar z około 1,5 sekundy, więc dwa procesy dzielące jeden rdzeń pokażą po około 50%.',
+        '<b>Strona statusu</b> pokazuje liczniki prowadzone przez samo PHP-FPM. <code>listen queue</code> liczy żądania czekające na wolnego workera, a <code>max listen queue</code> najdłuższą kolejkę od startu.',
+        '<b>Pula w makiecie różni się od domyślnej w Ubuntu.</b> Odpowiada <code>pm = static</code> i <code>listen = 127.0.0.1:9000</code>. Domyślny <code>www.conf</code> ma <code>pm = dynamic</code>, czyli FPM sam uruchamia i zamyka workery w granicy <code>pm.max_children</code>, oraz gniazdo Unix <code>/run/php/php8.3-fpm.sock</code>, przy którym <code>listen queue</code> może pokazywać 0. Licznik <code>max children reached</code> działa tylko przy <code>pm = dynamic</code> i <code>ondemand</code>.',
+      ],
+    },
+    commandsTitle: { en: 'Check it on your own server', pl: 'Sprawdź to na własnym serwerze' },
+    cmdHtop: { en: 'The same view on your server', pl: 'Ten sam widok na serwerze' },
+    cmdHtopNote: {
+      en: 'Opens the process tree filtered by <code>php</code>. Inside htop, F4 changes the filter, F5 switches the tree view and <code>q</code> quits. If htop is missing, install it with <code>sudo apt install htop</code>.',
+      pl: 'Otwiera drzewo procesów z filtrem <code>php</code>. W programie F4 zmienia filtr, F5 przełącza widok drzewa, a <code>q</code> zamyka htop. Jeśli go brakuje, zainstaluj go poleceniem <code>sudo apt install htop</code>.',
+    },
+    cmdCores: { en: 'How many cores?', pl: 'Ile mam rdzeni?' },
+    cmdCoresNote: {
+      en: 'Counts logical CPUs. With hyper-threading the result can be twice the number of physical cores.',
+      pl: 'Liczy rdzenie logiczne. Przy hyper-threadingu wynik bywa dwa razy większy niż liczba rdzeni fizycznych.',
+    },
+    cmdPs: { en: 'Which processes belong to PHP-FPM?', pl: 'Które procesy należą do PHP-FPM?' },
+    cmdPsNote: {
+      en: 'The workers’ PPID is the master’s PID. The config path depends on the PHP version and the distribution.',
+      pl: 'PPID workerów to PID mastera. Ścieżka do konfiguracji zależy od wersji PHP i dystrybucji.',
+    },
+    cmdStrace: { en: 'What is a worker waiting for?', pl: 'Na co czeka worker?' },
+    cmdStraceNote: {
+      en: 'A worker busy with a query sleeps in <code>poll()</code> on the PostgreSQL socket. A free worker waits in <code>accept()</code> for a new connection. Stop tracing with Ctrl+C.',
+      pl: 'Worker zajęty zapytaniem śpi w <code>poll()</code> na gnieździe PostgreSQL. Wolny worker czeka w <code>accept()</code> na nowe połączenie. Śledzenie przerwiesz klawiszami Ctrl+C.',
+    },
+    cmdStatus: { en: 'Turn on the status page', pl: 'Włącz stronę statusu' },
+    cmdStatusNote: {
+      en: 'Nginx also needs a <code>location</code> block that passes this path to FPM, on Ubuntu with <code>fastcgi_pass unix:/run/php/php8.3-fpm.sock;</code>. Allow it from internal addresses only.',
+      pl: 'Nginx potrzebuje też bloku <code>location</code>, który przekaże ten adres do FPM. W Ubuntu robi to <code>fastcgi_pass unix:/run/php/php8.3-fpm.sock;</code>. Udostępnij go tylko z adresów wewnętrznych.',
     },
   },
   glossary: {

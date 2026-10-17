@@ -83,7 +83,71 @@ window.studyUI = (() => {
       .forEach((el) => replaceHTML(el, texts(el.dataset.tHtml) ?? el.dataset.tHtml));
     document.documentElement.lang = language();
   }
-  return { language, texts, text, setText, replaceHTML, followColumn, applyTexts, tipButton };
+  // Light syntax colouring for code samples. At each position the first matching rule wins;
+  // text that no rule matches stays plain.
+  const codeRules = {
+    php: [
+      ["comment", /\/\*[\s\S]*?\*\/|\/\/[^\n]*|#(?!\[)[^\n]*/y],
+      ["string", /'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"/y],
+      ["attr", /#\[\\?[\w\\]+/y],
+      ["variable", /\$\w+/y],
+      [
+        "keyword",
+        /\b(?:abstract|as|catch|class|const|else|elseif|enum|extends|final|finally|fn|for|foreach|function|if|implements|instanceof|interface|match|namespace|new|private|protected|public|readonly|return|static|throw|try|use|while|yield|array|bool|callable|false|float|int|iterable|mixed|never|null|object|self|string|true|void)\b/y,
+      ],
+      ["number", /\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b|\b\d+(?:\.\d+)?\b/y],
+      ["type", /\b[A-Z]\w*/y],
+    ],
+    sql: [
+      ["comment", /--[^\n]*/y],
+      ["string", /'(?:''|[^'])*'/y],
+      ["number", /(?<!:):\w+|\b\d+(?:\.\d+)?\b/y],
+      ["keyword", /\b[A-Z][A-Z_]+\b/y],
+    ],
+    js: [
+      ["comment", /\/\*[\s\S]*?\*\/|\/\/[^\n]*/y],
+      ["string", /'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"|`(?:\\.|[^`\\])*`/y],
+      [
+        "keyword",
+        /\b(?:async|await|break|case|catch|class|const|continue|default|else|export|extends|false|finally|for|from|function|if|import|in|instanceof|let|new|null|of|require|return|switch|this|throw|true|try|typeof|undefined|var|while)\b/y,
+      ],
+      ["number", /\b\d+(?:\.\d+)?\b/y],
+      ["type", /\b[A-Z]\w*/y],
+    ],
+    nginx: [
+      ["comment", /#[^\n]*/y],
+      ["keyword", /(?<=^|\n)[ \t]*[a-z_]+(?=[ \t])/y],
+      ["variable", /\$\w+/y],
+      ["number", /\b\d+(?:\.\d+)*(?::\d+)?\b/y],
+    ],
+  };
+  const escapeHTML = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  function highlightCode(source, lang) {
+    const rules = codeRules[lang];
+    if (!rules) return escapeHTML(source);
+    let html = "",
+      plain = "",
+      i = 0;
+    scan: while (i < source.length) {
+      for (const [kind, rule] of rules) {
+        rule.lastIndex = i;
+        const match = rule.exec(source)?.[0];
+        if (match) {
+          html += escapeHTML(plain) + `<span class="tok-${kind}">${escapeHTML(match)}</span>`;
+          plain = "";
+          i += match.length;
+          continue scan;
+        }
+      }
+      plain += source[i++];
+    }
+    return html + escapeHTML(plain);
+  }
+  // Show source code in el with syntax colouring (data-code="php|sql|js|nginx"); textContent stays equal to source.
+  const setCode = (el, source, lang = el?.dataset.code) => {
+    if (el) el.innerHTML = highlightCode(source, lang);
+  };
+  return { language, texts, text, setText, replaceHTML, followColumn, applyTexts, tipButton, setCode };
 })();
 
 // ===== Simulations: PHP-FPM requests, CPU scheduling, database race, runtime comparison =====
@@ -487,6 +551,146 @@ window.studyUI = (() => {
       cores: state.cores,
       parallel: Math.min(workers, state.cores),
     });
+    renderLinux(m, t);
+  }
+  // Chapter 01 Linux view: the simulation state at t as htop and the PHP-FPM status page would show it.
+  // It uses the same instant as the metrics above (the interval starting at t) and the same clock.
+  // Mock-up of htop 3 and the PHP-FPM status page on Ubuntu 24.04 (PHP 8.3) at simulation time t.
+  // Memory, PIDs and the rest of the system are fixed sample values; states, CPU and queues follow the model.
+  function renderLinux(m, t) {
+    const { workerRows, coreRows, requests, duration, workers, cores, metrics } = phpModel;
+    const builtin = state.environment === "builtin",
+      live = t > 0 && t < duration,
+      note = (key, values) => esc(ui.text("linux.notes." + key, values)),
+      cells = workerRows.map((row) => (live ? row[t] : { id: "", phase: "idle" })),
+      runnable = (cell) => cell?.phase === "cpu" || cell?.phase === "ready",
+      width = 24,
+      memTotal = 4016128; // KiB: a server with 4 GB of RAM
+    const bar = (label, filled, text) =>
+      `<span class="htop-bar"><span class="htop-label">${label}</span>[<span class="htop-fill">${"|".repeat(filled)}</span>${" ".repeat(width - text.length - filled)}${text}]</span>`;
+    const cpuMeters = coreRows.map((row, c) => {
+      const id = live ? row[t] : "",
+        text = id ? "100.0%" : "0.0%";
+      return `<div class="htop-meter">${bar(String(c).padStart(3), id ? width - text.length : 0, text)}<span class="term-comment">${id ? note("coreBusy", { id }) : note("coreIdle")}</span></div>`;
+    });
+    // htop prints memory below 100000 KiB as plain KiB and larger values in MiB.
+    const kib = (n) => (n < 100000 ? String(n) : Math.round(n / 1024) + "M");
+    const cpuTime = (row, base) => {
+      const s = base + row.slice(0, Math.min(t, duration)).filter((cell) => cell.phase === "cpu").length * 0.25;
+      return `${Math.floor(s / 60)}:${(s % 60).toFixed(2).padStart(5, "0")}`;
+    };
+    const workerNote = (cell) => (cell.phase === "idle" ? note("idle") : note(cell.phase, { id: cell.id }));
+    const proc = ({ pid, user, virt, res, shr, phase, time, command, comment }) =>
+      `<tr class="htop-row-${phase}"><td>${pid}</td><td>${user}</td><td>20</td><td>0</td><td>${kib(virt)}</td><td>${kib(res)}</td><td>${kib(shr)}</td>` +
+      `<td class="htop-state">${runnable({ phase }) ? "R" : "S"}</td><td class="htop-pct">${phase === "cpu" ? "100.0" : "0.0"}</td>` +
+      `<td>${((res / memTotal) * 100).toFixed(1)}</td><td>${time}</td><td>${esc(command)}</td><td class="term-comment">${comment}</td></tr>`;
+    const list = builtin
+      ? [
+          {
+            pid: 1207,
+            user: "dev",
+            virt: 92440,
+            res: 28400,
+            shr: 21012,
+            phase: cells[0].phase,
+            time: cpuTime(workerRows[0], 0.85),
+            command: "php -S 127.0.0.1:8000 -t public",
+            comment: workerNote(cells[0]),
+          },
+        ]
+      : [
+          {
+            pid: 812,
+            user: "root",
+            virt: 231424,
+            res: 30896,
+            shr: 24316,
+            phase: "master",
+            time: "0:01.04",
+            command: "php-fpm: master process (/etc/php/8.3/fpm/php-fpm.conf)",
+            comment: note("master"),
+          },
+          ...cells.map((cell, w) => ({
+            pid: 901 + w,
+            user: "www-data",
+            virt: 234496,
+            res: 41216 + w * 1536,
+            shr: 26480,
+            phase: cell.phase,
+            time: cpuTime(workerRows[w], 3.12 + w * 0.47),
+            command: (w === cells.length - 1 ? "└─ " : "├─ ") + "php-fpm: pool www",
+            comment: workerNote(cell),
+          })),
+        ];
+    const used = 650000 + list.reduce((sum, p) => sum + p.res, 0),
+      memText = (used / 1048576).toFixed(2) + "G/3.83G";
+    // Load average assumes the selected scenario kept repeating during the last minute.
+    let runnableSum = 0;
+    for (let x = 1; x < duration; x++) runnableSum += workerRows.filter((row) => runnable(row[x])).length;
+    const load = runnableSum / Math.max(1, duration - 1) + 0.05,
+      loads = [load, load * 0.6 + 0.04, load * 0.35 + 0.03].map((v) => v.toFixed(2)).join(" ");
+    // Tasks counts the whole system, plus htop itself in state R while it reads /proc.
+    const running = cells.filter(runnable).length + 1;
+    const keys = [
+      ["F1", "Help  "],
+      ["F2", "Setup "],
+      ["F3", "Search"],
+      ["F4", "FILTER"],
+      ["F5", "List  "],
+      ["F6", "SortBy"],
+      ["F7", "Nice -"],
+      ["F8", "Nice +"],
+      ["F9", "Kill  "],
+      ["F10", "Quit  "],
+    ];
+    $("#phpHtop").innerHTML =
+      `<div class="htop-header"><div class="htop-meters">${cpuMeters.join("")}` +
+      `<div class="htop-meter">${bar("Mem", Math.round((used / memTotal) * (width - memText.length)), memText)}</div>` +
+      `<div class="htop-meter">${bar("Swp", 0, "0K/2.00G")}</div></div>` +
+      `<div class="htop-summary"><div><span class="htop-label">Tasks:</span> ${80 + list.length}, 143 thr; ${running} running</div>` +
+      `<div><span class="htop-label">Load average:</span> ${loads}</div><div><span class="htop-label">Uptime:</span> 12 days, 03:14:07</div></div></div>` +
+      `<table class="htop-procs"><thead><tr>${["PID", "USER", "PRI", "NI", "VIRT", "RES", "SHR", "S", "CPU%", "MEM%", "TIME+", "Command", ""]
+        .map((h) => `<th>${h}</th>`)
+        .join("")}</tr></thead><tbody>${list.map(proc).join("")}</tbody></table>` +
+      `<div class="htop-footer">${keys.map(([key, label]) => `<span><b>${key}</b><span>${label}</span></span>`).join("")}</div>`;
+    if (builtin) $("#phpFpmStatus").innerHTML = `<p class="term-text">${esc(ui.text("linux.builtinStatus"))}</p>`;
+    else {
+      const accepted =
+          t === 0 ? 0 : t >= duration ? requests.length : requests.filter((r) => r.startAt !== null && r.startAt <= t).length,
+        seen = metrics.slice(1, Math.min(t, duration - 1) + 1),
+        maxQueue = Math.max(m.queued, ...seen.map((x) => x.queued)),
+        maxActive = Math.max(m.busy, ...seen.map((x) => x.busy));
+      const line = (key, value, comment = "") =>
+        `<tr><td>${key}:</td><td>${value}</td><td class="term-comment">${comment}</td></tr>`;
+      $("#phpFpmStatus").innerHTML =
+        `<div class="term-prompt">$ curl -s http://127.0.0.1/fpm-status</div><table class="fpm-status">` +
+        [
+          line("pool", "www"),
+          line("process manager", "static"),
+          line("start time", "17/Oct/2026:08:12:03 +0000"),
+          line("start since", 4211),
+          line("accepted conn", accepted, note("accepted")),
+          line("listen queue", m.queued, note("same", { label: ui.text("queue") })),
+          line("max listen queue", maxQueue),
+          line("listen queue len", 511),
+          line("idle processes", workers - m.busy, note("idleWorkers")),
+          line("active processes", m.busy, note("same", { label: ui.text("busy") })),
+          line("total processes", workers),
+          line("max active processes", maxActive),
+          line("max children reached", 0),
+          line("slow requests", 0),
+        ].join("") +
+        "</table>";
+    }
+    ui.setText($("#htopConfig"), "linux.config", {
+      env: builtin ? "php -S" : "PHP-FPM",
+      workers,
+      cores,
+      load: ui.text(state.workload === "io" ? "simulation.iOHeavy" : "simulation.cpuHeavy"),
+    });
+    $("#htopTime").textContent = `t = ${t} / ${duration}`;
+    $("#htopBack").disabled = t === 0;
+    $("#htopNext").disabled = t >= duration;
   }
   function controlInit() {
     $$("[data-set]").forEach((g) =>
@@ -508,6 +712,9 @@ window.studyUI = (() => {
       state.phpTick = Math.max(0, state.phpTick - 1);
       renderPHP();
     };
+    // The Linux view steps through the same clock as the request simulation.
+    $("#htopNext").onclick = () => $("#phpNext").click();
+    $("#htopBack").onclick = () => $("#phpBack").click();
     $("#phpReset").onclick = () => {
       stopPHP();
       state.phpTick = 0;
@@ -1068,6 +1275,19 @@ window.studyUI = (() => {
     ui.setText($("#compareFibersDuration"), "elapsed", { n: fibersModel.duration });
     ui.setText($("#compareReactDuration"), "elapsed", { n: reactModel.duration });
     ui.setText($("#compareNodeDuration"), "elapsed", { n: nodeModel.duration });
+    $("#compareResults").innerHTML =
+      `<span class="compare-results-title">${esc(ui.text("compare.resultsTitle"))}</span>` +
+      [
+        ["PHP-FPM", comparePHPModel],
+        ["PHP-FPM + Fibers", fibersModel],
+        ["ReactPHP", reactModel],
+        ["Node.js", nodeModel],
+      ]
+        .map(
+          ([name, model]) =>
+            `<div class="cr-row"><span class="cr-name">${name}</span><span class="cr-track"><i style="width:${(model.duration / h) * 100}%"></i></span><b>${model.duration}</b></div>`,
+        )
+        .join("");
     if (t === 0) ui.setText($("#compareStatus"), "compareBefore");
     else if (t === h) ui.setText($("#compareStatus"), "compareComplete", { t });
     else {
@@ -1282,6 +1502,7 @@ window.studyUI = (() => {
   window.addEventListener("scroll", closeTip, { passive: true });
   window.addEventListener("resize", closeTip, { passive: true });
 
+  document.querySelectorAll("[data-code]").forEach((el) => ui.setCode(el, el.textContent));
   const codeExamples = {
     postgres: {
       optimistic: {
@@ -1365,7 +1586,7 @@ $em->wrapInTransaction(function ($tx) : void {
     const example = codeExamples[platform][strategy],
       copy = ui.texts("code.examples." + platform + "." + strategy);
     $("#codeCaption").textContent = copy.caption;
-    $("#codeExample").textContent = example.code;
+    ui.setCode($("#codeExample"), example.code, platform === "postgres" ? "sql" : "php");
     $("#codeInsightHeading").textContent = copy.title;
     $("#codeInsightBody").textContent = copy.body;
     $("#codeCaution").textContent = copy.caution;
@@ -1423,6 +1644,37 @@ $em->wrapInTransaction(function ($tx) : void {
   );
   ui.applyTexts();
   renderCode();
+})();
+
+// ===== Chapter introductions and summaries =====
+// Key terms, rule lists, comparison tables and links come from texts.js (lessons.*, linux.*).
+// An element names its source with data-lesson-terms, -steps, -list, -table or -links.
+(() => {
+  "use strict";
+  const ui = window.studyUI;
+  const attr = (value) => String(value).replace(/"/g, "&quot;");
+  const table = ({ title, head, rows, common }) =>
+    `<h3 class="lesson-table-title">${title}</h3><div class="lesson-table-scroll"><table class="lesson-compare" aria-label="${attr(title)}">` +
+    `<thead><tr>${head.map((cell) => `<th scope="col">${cell}</th>`).join("")}</tr></thead><tbody>` +
+    rows.map(([label, ...cells]) => `<tr><th scope="row">${label}</th>${cells.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("") +
+    (common ? `<tr class="lesson-common"><th scope="row">${common[0]}</th><td colspan="${head.length - 1}">${common[1]}</td></tr>` : "") +
+    "</tbody></table></div>";
+  const renderers = {
+    lessonTerms: (items) => items.map(([term, text]) => `<div class="lesson-term"><dt>${term}</dt><dd>${text}</dd></div>`).join(""),
+    lessonSteps: (items) => items.map(([title, text]) => `<li><b>${title}</b><span>${text}</span></li>`).join(""),
+    lessonList: (items) => items.map((item) => `<li><span>${item}</span></li>`).join(""),
+    lessonTable: (data) => (Array.isArray(data) ? data : [data]).map(table).join(""),
+    lessonLinks: (items) =>
+      items.map(([label, href]) => `<li><a href="${attr(href)}" target="_blank" rel="noopener">${label} ↗</a></li>`).join(""),
+  };
+  function render() {
+    for (const [key, build] of Object.entries(renderers))
+      document
+        .querySelectorAll("[data-" + key.replace(/[A-Z]/g, (c) => "-" + c.toLowerCase()) + "]")
+        .forEach((el) => (el.innerHTML = build(ui.texts(el.dataset[key]))));
+  }
+  document.querySelectorAll(".langbtn").forEach((b) => b.addEventListener("click", render));
+  render();
 })();
 
 // ===== Consistency tab: DDD aggregate and saga =====
@@ -1559,26 +1811,141 @@ final class DoctrineSession implements TransactionalSession
 // or run the command again with a NEW manager: Order is reloaded
 // and addItem() rechecks the limit.
 // Every add/remove method on Order must keep itemCount and items in sync.`;
-  const sagaCode = `// Conceptual Symfony Messenger Saga orchestrator
-// All handler steps must be idempotent.
-handle(OrderPlaced $e):
-  dispatch(new ReserveStock($e->orderId));
-handle(StockReserved $e):
-  dispatch(new ChargePayment($e->orderId));
-handle(PaymentCharged $e):
-  dispatch(new CreateShipment($e->orderId));
-handle(ShipmentFailed $e):
-  dispatch(new RefundPayment($e->orderId));
-handle(PaymentRefunded $e):
-  dispatch(new ReleaseStock($e->orderId));
-handle(StockReleased $e):
-  dispatch(new CancelOrder($e->orderId));
+  const sagaCode = `// Orders context, application layer. The Saga is an application service
+// of the Orders service and orchestrates Inventory, Payments and Shipping.
+// They know nothing about it: they handle commands and publish events.
+// Messages between contexts carry plain data, such as string IDs.
+// Symfony Messenger delivers messages and retries failed handlers.
+// It has no built-in Saga: the state and the steps below are our code.
+namespace App\\Ordering\\Application\\Saga;
 
-// Persist process state + stable correlation ID.
-// Write business data and outgoing event to an outbox
-// in the SAME local DB transaction.
-// Recover/retry after worker crash; this is not automatic
-// merely because Messenger is installed.`;
+use App\\Contracts\\Inventory\\{ReleaseStock, ReserveStock, StockReleased, StockReserved};
+use App\\Contracts\\Payments\\{ChargePayment, PaymentCharged, PaymentRefunded, RefundPayment};
+use App\\Contracts\\Shipping\\{CreateShipment, ShipmentCreated, ShipmentFailed};
+use App\\Ordering\\Application\\Command\\{CancelOrder, ConfirmOrder};
+use App\\Ordering\\Domain\\Event\\{OrderCancelled, OrderConfirmed, OrderPlaced};
+use Doctrine\\ORM\\Mapping as ORM;
+use Symfony\\Component\\Messenger\\Attribute\\AsMessageHandler;
+
+// Saga state: one row per order in the Orders database.
+#[ORM\\Entity]
+class OrderFulfillment
+{
+    public function __construct(
+        #[ORM\\Id, ORM\\Column] private string $orderId,
+        #[ORM\\Column] private string $step,
+    ) {}
+
+    public function step(): string { return $this->step; }
+    public function moveTo(string $step): void { $this->step = $step; }
+}
+
+// Application ports; Doctrine adapters omitted.
+interface OrderFulfillmentRepository
+{
+    public function add(OrderFulfillment $saga): void;
+    /** SELECT ... FOR UPDATE: the row stays locked until COMMIT. */
+    public function getForUpdate(string $orderId): ?OrderFulfillment;
+}
+
+interface Outbox
+{
+    /** INSERT INTO outbox_messages in the current transaction. */
+    public function add(object $message): void;
+}
+
+// Messenger's doctrine_transaction middleware wraps each handler call
+// in one local transaction: the new step and the next command commit
+// together, then the relay from chapter 02 publishes the command.
+// If a handler throws, the transaction rolls back and Messenger retries
+// the message. After the last retry it goes to the failure transport.
+final class OrderFulfillmentSaga
+{
+    public function __construct(
+        private OrderFulfillmentRepository $sagas,
+        private Outbox $outbox,
+    ) {}
+
+    #[AsMessageHandler]
+    public function onOrderPlaced(OrderPlaced $e): void
+    {
+        if ($this->sagas->getForUpdate($e->orderId) !== null) {
+            return; // duplicate OrderPlaced
+        }
+        // A concurrent duplicate fails on the primary key;
+        // Messenger retries it and the check above stops it.
+        $this->sagas->add(new OrderFulfillment($e->orderId, 'reserving_stock'));
+        $this->outbox->add(new ReserveStock($e->orderId));
+    }
+
+    // Success path: each result moves the Saga one step forward.
+    #[AsMessageHandler]
+    public function onStockReserved(StockReserved $e): void
+    {
+        $this->advance($e->orderId, 'reserving_stock', 'charging_payment', new ChargePayment($e->orderId));
+    }
+
+    #[AsMessageHandler]
+    public function onPaymentCharged(PaymentCharged $e): void
+    {
+        $this->advance($e->orderId, 'charging_payment', 'creating_shipment', new CreateShipment($e->orderId));
+    }
+
+    #[AsMessageHandler]
+    public function onShipmentCreated(ShipmentCreated $e): void
+    {
+        $this->advance($e->orderId, 'creating_shipment', 'confirming', new ConfirmOrder($e->orderId));
+    }
+
+    #[AsMessageHandler]
+    public function onOrderConfirmed(OrderConfirmed $e): void
+    {
+        $this->advance($e->orderId, 'confirming', 'completed', null);
+    }
+
+    // Compensation: undo the completed steps in reverse order.
+    #[AsMessageHandler]
+    public function onShipmentFailed(ShipmentFailed $e): void
+    {
+        $this->advance($e->orderId, 'creating_shipment', 'refunding_payment', new RefundPayment($e->orderId));
+    }
+
+    #[AsMessageHandler]
+    public function onPaymentRefunded(PaymentRefunded $e): void
+    {
+        $this->advance($e->orderId, 'refunding_payment', 'releasing_stock', new ReleaseStock($e->orderId));
+    }
+
+    #[AsMessageHandler]
+    public function onStockReleased(StockReleased $e): void
+    {
+        $this->advance($e->orderId, 'releasing_stock', 'cancelling', new CancelOrder($e->orderId));
+    }
+
+    #[AsMessageHandler]
+    public function onOrderCancelled(OrderCancelled $e): void
+    {
+        $this->advance($e->orderId, 'cancelling', 'cancelled', null);
+    }
+
+    private function advance(string $orderId, string $from, string $to, ?object $command): void
+    {
+        $saga = $this->sagas->getForUpdate($orderId); // a second copy waits here
+        if ($saga === null || $saga->step() !== $from) {
+            return; // duplicate or late message: this step is already done
+        }
+        $saga->moveTo($to);
+        if ($command !== null) {
+            $this->outbox->add($command);
+        }
+    }
+}
+
+// ConfirmOrder and CancelOrder stay in this context, but the Order
+// aggregate changes in its own transaction (chapter 04).
+// Not shown: a scheduled job finds Sagas stuck in one step for too long,
+// then resends the command or alerts a person. A PaymentFailed or
+// StockUnavailable result would start compensation from an earlier step.`;
   function stop(obj) {
     if (obj.timer !== null) {
       clearInterval(obj.timer);
@@ -1848,7 +2215,7 @@ handle(StockReleased $e):
       `<span class="event-count">t${s.tick}</span><div><b>${event[0]}</b><p>${event[1]}</p></div>`;
     $("#sagaFoot").innerHTML = `<strong>${ui.remember}</strong> ${ui.sagaFoot}`;
     $("#sagaNotes").innerHTML =
-      `<span>${ui.sagaNote1}${termIcon("outbox")}</span><span>${ui.sagaNote2}${termIcon("idempotency")}</span><span>${ui.sagaNote3}</span>`;
+      `<span>${ui.sagaNote1}${termIcon("orchestrator")}</span><span>${ui.sagaNote2}${termIcon("outbox")}</span><span>${ui.sagaNote3}${termIcon("idempotency")}</span>`;
     $("#sagaCounter").textContent = `t = ${s.tick} / ${plan.length - 1}`;
     Object.assign($("#sagaCounter").dataset, { tick: s.tick, last: plan.length - 1 });
     $("#sagaControls [data-act=play]").dataset.playing = String(!!s.timer);
@@ -1955,8 +2322,8 @@ handle(StockReleased $e):
   };
   attach("#aggControls", a, renderAgg, () => aggSteps.length);
   attach("#sagaControls", s, renderSaga, () => (s.mode === "failure" ? sagaFailure.length : sagaSuccess.length));
-  $("#aggCode").textContent = aggCode;
-  $("#sagaCode").textContent = sagaCode;
+  studyUI.setCode($("#aggCode"), aggCode);
+  studyUI.setCode($("#sagaCode"), sagaCode);
   document.querySelectorAll(".langbtn").forEach((b) => b.addEventListener("click", renderI18n));
   document.querySelectorAll("[data-tab]").forEach((b) =>
     b.addEventListener("click", () => {
@@ -2385,12 +2752,14 @@ ORDER BY id LIMIT 1;
       if (typeof val === "string") el.textContent = val;
     });
     studyUI.replaceHTML($("#obModeHelp"), tr.modeHelp[state.mode] + studyUI.tipButton("outbox.modeTips." + state.mode));
-    $("#obCode").textContent =
+    studyUI.setCode(
+      $("#obCode"),
       state.mode === "unsafe"
         ? unsafeSql
         : state.mode === "wait"
           ? claimSql.replace("FOR UPDATE SKIP LOCKED", "FOR UPDATE")
-          : claimSql;
+          : claimSql,
+    );
     all("[data-ob-mode]").forEach((b) => {
       const on = b.dataset.obMode === state.mode;
       b.classList.toggle("on", on);
@@ -2514,6 +2883,138 @@ ORDER BY id LIMIT 1;
     }),
   );
   render();
+})();
+
+// ===== Side windows: a section floats next to the experiment it explains =====
+// The section stays at its place in the DOM, so scoped styles and queries keep working; it only becomes position: fixed.
+(() => {
+  const ui = window.studyUI;
+  const targets = [...document.querySelectorAll(".popout-target")];
+  if (!targets.length) return;
+  const narrow = matchMedia("(max-width: 760px)");
+  const icon = (d) =>
+    `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
+  const openIcon = icon("M9.5 1.5h5v5M14.5 1.5 8 8M12.5 9.5v5h-11v-11h5"),
+    backIcon = icon("M6.5 14.5h-5v-5M1.5 14.5 8 8M3.5 6.5v-5h11v11h-5");
+  let open = null;
+  // data-popout names a TEXTS key; when empty, the window takes the section's own summary or caption.
+  const title = (el) =>
+    el.dataset.popout ? ui.text(el.dataset.popout) : el.querySelector("summary, figcaption b")?.textContent.trim() || "";
+  targets.forEach((el) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "popout-btn";
+    button.innerHTML = openIcon;
+    button.addEventListener("click", () => popOut(el));
+    el.append(button);
+  });
+  function place(el) {
+    const top = Math.round((document.querySelector(".topbar")?.getBoundingClientRect().bottom || 0) + 12),
+      width = Math.round(Math.min(560, Math.max(340, innerWidth * 0.42))),
+      height = Math.round(Math.max(240, Math.min(640, innerHeight - top - 100)));
+    Object.assign(el.style, {
+      left: innerWidth - width - 16 + "px",
+      top: top + "px",
+      width: width + "px",
+      height: height + "px",
+    });
+  }
+  function popOut(el) {
+    restore(false);
+    const placeholder = document.createElement("div"),
+      bar = document.createElement("div"),
+      details = el.querySelector(":scope > details");
+    placeholder.className = "popout-placeholder";
+    placeholder.innerHTML = `<span></span><button type="button"></button>`;
+    placeholder.querySelector("button").addEventListener("click", () => restore(true));
+    bar.className = "popout-bar";
+    bar.innerHTML = `<span class="popout-title"></span><button type="button" class="popout-restore">${backIcon}<span></span></button>`;
+    bar.querySelector("button").addEventListener("click", () => restore(true));
+    bar.addEventListener("pointerdown", (e) => drag(e, el));
+    if (details) details.open = true;
+    el.before(placeholder);
+    el.prepend(bar);
+    el.classList.add("is-popped");
+    el.setAttribute("role", "dialog");
+    open = { el, placeholder, bar };
+    place(el);
+    localize();
+    bar.querySelector("button").focus({ preventScroll: true });
+  }
+  function restore(focus) {
+    if (!open) return;
+    const { el, placeholder, bar } = open;
+    open = null;
+    el.classList.remove("is-popped");
+    el.removeAttribute("role");
+    el.removeAttribute("aria-label");
+    el.removeAttribute("style");
+    bar.remove();
+    placeholder.remove();
+    if (focus) el.querySelector(":scope > .popout-btn").focus({ preventScroll: true });
+  }
+  function drag(e, el) {
+    if (e.button !== 0 || narrow.matches || e.target.closest("button")) return;
+    const bar = e.currentTarget,
+      box = el.getBoundingClientRect(),
+      dx = e.clientX - box.left,
+      dy = e.clientY - box.top;
+    bar.setPointerCapture(e.pointerId);
+    const move = (ev) => {
+      el.style.left = Math.min(Math.max(ev.clientX - dx, 0), innerWidth - box.width) + "px";
+      el.style.top = Math.min(Math.max(ev.clientY - dy, 0), innerHeight - 40) + "px";
+    };
+    const end = () => {
+      bar.removeEventListener("pointermove", move);
+      bar.removeEventListener("pointerup", end);
+      bar.removeEventListener("pointercancel", end);
+    };
+    bar.addEventListener("pointermove", move);
+    bar.addEventListener("pointerup", end);
+    bar.addEventListener("pointercancel", end);
+  }
+  function localize() {
+    const label = ui.text("popoutOpen");
+    targets.forEach((el) => {
+      const button = el.querySelector(":scope > .popout-btn");
+      button.setAttribute("aria-label", label);
+      button.title = label;
+    });
+    if (!open) return;
+    const name = title(open.el),
+      heading = open.bar.querySelector(".popout-title");
+    open.el.setAttribute("aria-label", ui.text("popoutWindow", { title: name }));
+    heading.textContent = name;
+    heading.title = ui.text("popoutDrag");
+    open.bar.querySelector(".popout-restore span").textContent = ui.text("popoutRestore");
+    open.placeholder.querySelector("span").textContent = ui.text("popoutPlaceholder");
+    open.placeholder.querySelector("button").textContent = ui.text("popoutRestoreHere");
+  }
+  // Escape puts the window back, unless it is closing a tooltip first (capture runs before the tooltip handler).
+  document.addEventListener(
+    "keydown",
+    (e) => {
+      if (e.key === "Escape" && open?.el.contains(document.activeElement) && document.getElementById("floatingTip")?.hidden !== false)
+        restore(true);
+    },
+    true,
+  );
+  // Closing a disclosure that contains the window also puts it back.
+  document.addEventListener(
+    "toggle",
+    (e) => {
+      if (open && !e.target.open && e.target.contains(open.el)) restore(false);
+    },
+    true,
+  );
+  addEventListener("resize", () => {
+    if (!open || narrow.matches) return;
+    const box = open.el.getBoundingClientRect();
+    open.el.style.left = Math.max(0, Math.min(box.left, innerWidth - box.width)) + "px";
+    open.el.style.top = Math.max(0, Math.min(box.top, innerHeight - 40)) + "px";
+  });
+  document.querySelectorAll(".langbtn").forEach((button) => button.addEventListener("click", () => queueMicrotask(localize)));
+  localize();
 })();
 
 // ===== Accessible labels for controls =====
