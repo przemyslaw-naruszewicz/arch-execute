@@ -584,11 +584,6 @@
   color: #6b7280;
   line-height: 1.55;
 }
-.saga-arch-grid {
-  display: grid;
-  grid-template-columns: 1fr minmax(180px, 0.8fr);
-  gap: 14px;
-}
 .saga-network {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -622,57 +617,7 @@
   background: #f7f7f6;
   border-style: dashed;
 }
-.saga-service-grid {
-  margin-top: 12px;
-}
-.saga-service {
-  min-height: 126px;
-}.saga-service .s-state {
-  font-size: 0.92rem;
-}
-.saga-flow-list {
-  display: grid;
-  gap: 9px;
-  align-content: start;
-}
-.saga-step-chip {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  padding: 10px 11px;
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  font-size: 0.79rem;
-  color: #6b7280;
-  line-height: 1.45;
-}
-.saga-step-chip.active {
-  border-color: var(--cobalt-line);
-  background: var(--canvas);
-  color: var(--ink-2);
-}
-.saga-step-chip.comp {
-  border-color: var(--amber-line);
-  background: var(--amber-bg);
-  color: var(--amber-ink);
-}
-.saga-step-no {
-  flex: 0 0 24px;
-  height: 24px;
-  background: #2d3139;
-  color: #f0f1f3;
-  display: grid;
-  place-items: center;
-  font-size: 0.72rem;
-  font-weight: 600;
-}
-.saga-step-chip.comp .saga-step-no {
-  background: var(--amber-ink);
-}
 @media (max-width: 1080px) {
-  .saga-arch-grid {
-    grid-template-columns: 1fr;
-  }
   .agg-context-map {
     grid-template-columns: 1fr;
   }
@@ -688,12 +633,8 @@
   .consistency-help,
   .saga-summary-row,
   .saga-network,
-  .saga-service-grid,
   .agg-items-grid {
     grid-template-columns: 1fr;
-  }
-  .saga-step-chip {
-    padding: 9px 10px;
   }
 }
 
@@ -3520,12 +3461,12 @@ button {
   overflow-x: auto;
   border: 1px solid var(--outline);
 }
-:is(#aggregateLab, #sagaLab) details {
+:is(#aggregateLab, #sagaLab) details:not(.disclosure) {
   margin-top: 12px;
   font-size: 12px;
   color: var(--ink-3);
 }
-:is(#aggregateLab, #sagaLab) summary {
+:is(#aggregateLab, #sagaLab) details:not(.disclosure) > summary {
   cursor: pointer;
   color: var(--ink);
   font-weight: 600;
@@ -3558,8 +3499,7 @@ button {
   }
 }
 
-.agg-request-card,
-.saga-map-card {
+.agg-request-card {
   border: 1px solid #e5e7eb;
   background: #ffffff;
   box-shadow: none;
@@ -3634,139 +3574,440 @@ button {
   font-weight: 600;
   border: 1px solid #e5e7eb;
 }
-.saga-map-card {
-  padding: 16px;
-  margin: 12px 0 14px;
+@media (max-width: 640px) {
+  .agg-request-meta {
+    grid-template-columns: 1fr;
+  }
 }
-.saga-map-top {
+
+/* Saga sequence diagram: one lifeline per participant, two rows per step (command, then the event sent back).
+   Rows have a fixed height, so app.js places arrows and transaction boxes with --row and with --x / --w
+   (percentages of the lanes area). Column widths come from app.js as --seq-cols. */
+.saga-seq-figure {
+  margin: 0;
+  padding: clamp(12px, 2vw, 20px);
+  background: var(--surface);
+  border: 1px solid var(--outline);
+}
+.saga-seq-scroll {
+  overflow-x: auto;
+}
+.saga-seq {
+  --seq-gutter: 168px;
+  --seq-row: 40px;
+  --seq-line: 27px;
+  position: relative;
+  isolation: isolate;
+  min-width: 820px;
+}
+.saga-seq .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.saga-seq-heads {
+  display: grid;
+  grid-template-columns: var(--seq-gutter) var(--seq-cols, repeat(6, minmax(0, 1fr)));
+  padding-top: 32px;
+}
+/* The Orders context spans the Orders and Saga lanes from the label to the last step.
+   The tint sits under the rows (z-index -1), the dashed border above them. */
+.saga-seq-context {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--seq-gutter) + (100% - var(--seq-gutter)) * var(--x) / 100 + 2px);
+  width: calc((100% - var(--seq-gutter)) * var(--w) / 100 - 4px);
+  pointer-events: none;
+}
+.saga-seq-context::before,
+.saga-seq-context::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.saga-seq-context::before {
+  z-index: -1;
+  background: var(--surface-2);
+}
+.saga-seq-context::after {
+  z-index: 1;
+  border: 1px dashed var(--ink-muted);
+}
+.saga-seq-context-label {
+  position: absolute;
+  top: 6px;
+  left: 9px;
   display: flex;
-  justify-content: center;
-  margin-bottom: 14px;
-}
-.saga-orchestrator {
-  min-width: min(100%, 360px);
-  padding: 14px 18px;
-  background: var(--ink);
-  color: var(--surface-2);
-  border: 1px solid var(--ink);
-  text-align: center;
-  box-shadow: none;
-}
-.saga-orchestrator small {
-  display: block;
-  color: #9ca3af;
+  align-items: center;
+  color: var(--ink-3);
+  font: 600 10px/14px var(--font-mono);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  margin-bottom: 4px;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+.saga-seq-corner {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 12px 8px;
+  background: var(--surface);
+  color: var(--ink-muted);
   font: 500 10px/14px var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
-.saga-orchestrator b {
-  display: block;
-  font-size: 1rem;
-  margin-bottom: 4px;
-}
-.saga-service-grid {
+.saga-seq-head {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  align-items: stretch;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  margin: 0 5px;
+  padding: 10px 11px;
+  background: var(--surface);
+  border: 1px solid var(--outline-strong);
 }
-.saga-service {
-  position: relative;
-  padding: 13px 12px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  display: grid;
-  gap: 7px;
+.saga-seq-head b {
+  color: var(--ink-2);
+  font-size: 0.86rem;
+  line-height: 1.3;
 }
-.saga-service.active {
+.saga-seq-head .s-state {
+  color: var(--ink);
+  font: 600 12px/16px var(--font-mono);
+  overflow-wrap: anywhere;
+}
+.saga-seq-head .s-note {
+  color: var(--ink-muted);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+.saga-seq-head.active {
   border-color: var(--cobalt);
   box-shadow: 0 0 0 1px var(--cobalt);
 }
-.saga-service.comp {
+.saga-seq-head.comp {
   border-color: var(--amber);
   box-shadow: 0 0 0 1px var(--amber);
 }
-.saga-service b {
-  font-size: 0.9rem;
-  color: #2d3139;
-}
-.saga-service .s-state {
-  font-weight: 600;
-  color: #2d3139;
-}
-.saga-service .s-note {
-  font-size: 0.76rem;
-  color: #6b7280;
-}
-.saga-service .tx-tag {
-  display: inline-flex;
-  padding: 5px 8px;
-  background: #f0f1f3;
-  color: #4b5563;
-  font-size: 0.7rem;
-  font-weight: 600;
-  justify-self: start;
-}
-.saga-links-rail {
-  display: grid;
-  gap: 8px;
-  margin-top: 14px;
-}
-.saga-link {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 10px;
-  align-items: center;
-  padding: 9px 11px;
-  background: #f7f7f6;
-  border: 1px solid #e5e7eb;
-  font-size: 0.8rem;
-  color: #6b7280;
-}
-.saga-link.active {
-  background: var(--canvas);
-  border-color: var(--cobalt-line);
-  color: var(--ink-2);
-}
-.saga-link.comp {
-  background: var(--amber-bg);
-  border-color: var(--amber-line);
+.saga-seq-head.comp .s-state {
   color: var(--amber-ink);
 }
-.saga-link .kind {
-  padding: 4px 7px;
-  background: #2d3139;
-  color: #f0f1f3;
-  font-size: 0.66rem;
-  font-weight: 600;
+.saga-seq-head.fail {
+  border-color: var(--vermilion);
+  box-shadow: 0 0 0 1px var(--vermilion);
+}
+.saga-seq-head.fail .s-state {
+  color: var(--vermilion-ink);
+}
+.saga-seq-head.is-client {
+  background: var(--canvas);
+  border-style: dashed;
+}
+.saga-seq-head.is-saga {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+.saga-seq-head.is-saga small {
+  color: var(--outline-strong);
+  font: 500 10px/14px var(--font-mono);
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
 }
-.saga-link.comp .kind {
+.saga-seq-head.is-saga b,
+.saga-seq-head.is-saga .s-state {
+  color: var(--surface);
+}
+.saga-seq-head.is-saga .s-note {
+  color: var(--outline-strong);
+}
+/* The bottom padding extends the lifelines below the last step, so the Saga's final handler box fits. */
+.saga-seq-body {
+  position: relative;
+  padding-bottom: 20px;
+}
+.saga-seq-step {
+  display: flex;
+  height: calc(2 * var(--seq-row));
+  border-top: 1px solid var(--outline);
+}
+.saga-seq-step.current {
+  background: var(--cobalt-bg);
+}
+.saga-seq-step.current.comp {
+  background: var(--amber-bg);
+}
+.saga-seq-step.current.fail {
+  background: var(--vermilion-bg);
+}
+.saga-step-chip {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  flex: 0 0 var(--seq-gutter);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+  background: var(--surface);
+  border-right: 1px solid var(--outline);
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+  line-height: 1.35;
+  cursor: pointer;
+}
+.saga-step-chip:hover {
+  color: var(--ink);
+}
+.saga-step-chip:focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: -2px;
+}
+.saga-step-no {
+  flex: 0 0 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--outline-strong);
+  color: var(--ink-muted);
+  font: 600 11px/1 var(--font-mono);
+}
+.saga-seq-step.done .saga-step-chip {
+  color: var(--ink-2);
+}
+.saga-seq-step.done .saga-step-no {
+  background: var(--ink-2);
+  border-color: var(--ink-2);
+  color: var(--surface);
+}
+.saga-seq-step.done.comp .saga-step-no {
   background: var(--amber-ink);
+  border-color: var(--amber-ink);
 }
-.saga-link .dir {
+.saga-seq-step.done.fail .saga-step-no {
+  background: var(--vermilion-ink);
+  border-color: var(--vermilion-ink);
+}
+.saga-seq-step.current .saga-step-chip {
+  background: inherit;
+  color: var(--ink);
   font-weight: 600;
-  color: #2d3139;
 }
-.saga-map-caption {
-  margin: 10px 0 0;
+.saga-seq-step.current:not(.comp, .fail) .saga-step-no {
+  background: var(--cobalt);
+  border-color: var(--cobalt);
+}
+.saga-seq-lanes {
+  position: absolute;
+  inset: 0 0 0 var(--seq-gutter);
+  z-index: 1;
+  pointer-events: none;
+}
+.saga-seq-life {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--x) * 1%);
+  border-left: 1px dashed var(--outline-strong);
+  transform: translateX(-50%);
+}
+/* The Saga's state lives for the whole process, so its lifeline is solid. */
+.saga-seq-life.is-saga {
+  border-left: 2px solid var(--ink-2);
+}
+/* A service's own transaction: from the command it receives to the event it sends back. */
+.saga-seq-tx,
+.saga-key-tx {
+  border: 1px solid var(--emerald);
+  background: var(--emerald-bg);
+}
+.saga-seq-tx {
+  position: absolute;
+  left: calc(var(--x) * 1% - 5.5px);
+  top: calc(var(--row) * var(--seq-row) + var(--seq-line));
+  width: 11px;
+  height: calc(var(--seq-row) * var(--h, 1));
+}
+.saga-seq-tx.comp {
+  border-color: var(--amber);
+  background: var(--amber-bg);
+}
+.saga-seq-tx.fail {
+  border-color: var(--vermilion);
+  background: var(--vermilion-bg);
+}
+.saga-seq-tx.saga,
+.saga-key-tx.saga {
+  border-color: var(--ink-2);
+  background: var(--ink-2);
+}
+.saga-msg {
+  position: absolute;
+  left: calc(var(--x) * 1%);
+  top: calc(var(--row) * var(--seq-row));
+  width: calc(var(--w) * 1%);
+  height: var(--seq-row);
+  color: var(--ink-muted);
+}
+.saga-msg.comp {
+  color: var(--amber);
+}
+.saga-msg.fail {
+  color: var(--vermilion);
+}
+.saga-msg.current:not(.comp, .fail) {
+  color: var(--cobalt);
+}
+.saga-msg-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--seq-line);
+  border-top: 2px solid currentColor;
+}
+.saga-msg.in-l .saga-msg-line {
+  left: 6px;
+}
+.saga-msg.in-r .saga-msg-line {
+  right: 6px;
+}
+.saga-msg.reply .saga-msg-line {
+  border-top-style: dashed;
+}
+/* Filled head for a command or request, open head for an event. */
+.saga-msg-line::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  right: -1px;
+  width: 10px;
+  height: 10px;
+  background: currentColor;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+.saga-msg.left .saga-msg-line::after {
+  right: auto;
+  left: -1px;
+  clip-path: polygon(100% 0, 0 50%, 100% 100%);
+}
+.saga-msg.reply .saga-msg-line::after {
+  top: -5px;
+  right: 1px;
+  width: 8px;
+  height: 8px;
+  background: none;
+  border: solid currentColor;
+  border-width: 2px 2px 0 0;
+  clip-path: none;
+  transform: rotate(45deg);
+}
+.saga-msg.reply.left .saga-msg-line::after {
+  right: auto;
+  left: 1px;
+  transform: rotate(-135deg);
+}
+.saga-msg-label {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--seq-line) - 21px);
+  padding: 0 3px;
+  background: var(--surface);
+  color: var(--ink-3);
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+.saga-msg-label code {
+  font: 500 11px/16px var(--font-mono);
+}
+.saga-msg.comp .saga-msg-label {
+  color: var(--amber-ink);
+}
+.saga-msg.fail .saga-msg-label {
+  color: var(--vermilion-ink);
+}
+.saga-msg.current .saga-msg-label code {
+  font-weight: 700;
+}
+.saga-msg.current.step-ok .saga-msg-label {
+  background: var(--cobalt-bg);
+}
+.saga-msg.current.step-ok:not(.comp, .fail) .saga-msg-label {
+  color: var(--cobalt);
+}
+.saga-msg.current.step-comp .saga-msg-label {
+  background: var(--amber-bg);
+}
+.saga-msg.current.step-fail .saga-msg-label {
+  background: var(--vermilion-bg);
+}
+.saga-seq-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--outline);
+  color: var(--ink-3);
   font-size: 0.78rem;
-  color: #6b7280;
+  line-height: 1.4;
 }
-@media (max-width: 980px) {
-  .saga-service-grid {
-    grid-template-columns: 1fr 1fr;
-  }
+.saga-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
-@media (max-width: 640px) {
-  .agg-request-meta,
-  .saga-service-grid {
-    grid-template-columns: 1fr;
+.saga-key .saga-msg {
+  --seq-line: 4px;
+  position: relative;
+  left: auto;
+  top: auto;
+  flex: none;
+  width: 32px;
+  height: 10px;
+}
+.saga-key-tx {
+  flex: none;
+  width: 11px;
+  height: 18px;
+}
+.saga-seq-caption {
+  margin: 8px 0 0;
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+/* Phones: the step column keeps only the number; the step name stays for screen readers. */
+@media (max-width: 700px) {
+  .saga-seq {
+    --seq-gutter: 44px;
+    min-width: 640px;
   }
-  .saga-link {
-    grid-template-columns: 1fr;
+  .saga-seq-corner {
+    padding: 0 6px 8px;
+  }
+  .saga-seq-head {
+    margin: 0 3px;
+    padding: 8px;
+  }
+  .saga-step-chip {
+    padding: 0 9px;
+  }
+  .saga-step-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .saga-msg-label code {
+    font-size: 10px;
   }
 }
 
@@ -3919,26 +4160,6 @@ button {
 :is(#tab-aggregate, #tab-saga) .term-button:focus-visible {
   outline: 2px solid var(--cobalt);
   outline-offset: 2px;
-}
-:is(#tab-aggregate, #tab-saga) .saga-step-chip {
-  transition: background-color 0.2s,
-    border-color 0.2s,
-    opacity 0.2s;
-}
-:is(#tab-aggregate, #tab-saga) .saga-step-chip:not(.active) {
-  opacity: 0.72;
-}
-:is(#tab-aggregate, #tab-saga) .saga-step-chip.active:not(.comp) {
-  background: var(--surface-2);
-  border-color: var(--outline-strong);
-}
-:is(#tab-aggregate, #tab-saga) .saga-step-chip.active.comp {
-  opacity: 1;
-  background: var(--amber-bg);
-  border-color: var(--amber-line);
-}
-:is(#tab-aggregate, #tab-saga) .saga-flow-current {
-  font-weight: 600;
 }
 @media (max-width: 1050px) {
   :is(#tab-aggregate, #tab-saga) .agg-landscape-grid {
@@ -4251,10 +4472,10 @@ button {
   font-size: 12px !important;
   line-height: 1.7 !important;
 }
-:is(#tab-aggregate, #tab-saga) details:not(.ux-extra-primer) {
+:is(#tab-aggregate, #tab-saga) details:not(.ux-extra-primer, .disclosure) {
   padding: 11px 0;
 }
-:is(#tab-aggregate, #tab-saga) summary {
+:is(#tab-aggregate, #tab-saga) details:not(.disclosure) > summary {
   font-size: 13.5px !important;
 }
 /* Saga's primary map should lead, not a wall of glossary cards. */
@@ -4278,92 +4499,6 @@ button {
   line-height: 1.55 !important;
 }
 :is(#tab-aggregate, #tab-saga) .saga-summary p {
-  font-size: 12.5px !important;
-  line-height: 1.65 !important;
-}
-:is(#tab-aggregate, #tab-saga) .saga-arch-grid {
-  grid-template-columns: 1fr !important;
-  gap: 16px !important;
-}
-:is(#tab-aggregate, #tab-saga) .saga-map-card {
-  border: 1px solid #e5e7eb !important;
-  box-shadow: none !important;
-  padding: 20px !important;
-  background: #ffffff !important;
-  margin: 0 !important;
-}
-:is(#tab-aggregate, #tab-saga) .saga-map-top {
-  margin-bottom: 17px !important;
-}
-:is(#tab-aggregate, #tab-saga) .saga-orchestrator {
-  padding: 16px 19px !important;
-  box-shadow: none !important;
-  max-width: 520px;
-}
-:is(#tab-aggregate, #tab-saga) .saga-service-grid {
-  gap: 12px !important;
-}
-:is(#tab-aggregate, #tab-saga) .saga-service {
-  min-height: 130px !important;
-  padding: 16px !important;
-  background: #ffffff !important;
-}
-:is(#tab-aggregate, #tab-saga) .saga-service b {
-  font-size: 14px !important;
-}
-:is(#tab-aggregate, #tab-saga) .saga-service .s-state {
-  font-size: 15px !important;
-  line-height: 1.4 !important;
-}
-:is(#tab-aggregate, #tab-saga) .saga-service .s-note {
-  font-size: 12px !important;
-  line-height: 1.6 !important;
-}
-:is(#tab-aggregate, #tab-saga) .saga-service .tx-tag {
-  font-size: 11px !important;
-  line-height: 1.5 !important;
-}
-:is(#tab-aggregate, #tab-saga) .saga-links-rail {
-  margin-top: 17px !important;
-}
-:is(#tab-aggregate, #tab-saga) .saga-link {
-  font-size: 12.5px !important;
-  line-height: 1.6 !important;
-}
-:is(#tab-aggregate, #tab-saga) .saga-flow-list {
-  display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 9px !important;
-}
-:is(#tab-aggregate, #tab-saga) .saga-step-chip {
-  font-size: 12.5px !important;
-  line-height: 1.55 !important;
-  padding: 13px !important;
-  opacity: 1 !important;
-}
-:is(#tab-aggregate, #tab-saga) .saga-step-chip.active:not(.saga-flow-current) {
-  background: #f7f7f6 !important;
-  border-color: #d1d5db !important;
-  color: #4b5563 !important;
-}
-:is(#tab-aggregate, #tab-saga) .saga-step-chip.saga-flow-current {
-  background: var(--surface) !important;
-  border: 1px solid var(--cobalt) !important;
-  color: var(--ink) !important;
-  box-shadow: 0 0 0 1px var(--cobalt) !important;
-}
-:is(#tab-aggregate, #tab-saga) .saga-step-chip.comp.saga-flow-current {
-  background: var(--amber-bg) !important;
-  border-color: var(--amber) !important;
-  color: var(--amber-ink) !important;
-  box-shadow: 0 0 0 1px var(--amber) !important;
-}
-:is(#tab-aggregate, #tab-saga) .saga-step-chip .saga-step-no {
-  height: 27px;
-  width: 27px;
-  flex-basis: 27px !important;
-}
-:is(#tab-aggregate, #tab-saga) .saga-map-caption {
   font-size: 12.5px !important;
   line-height: 1.65 !important;
 }
@@ -4400,14 +4535,6 @@ button {
     top: 8px;
     z-index: 9;
     box-shadow: none;
-  }
-}
-@media (max-width: 1000px) {
-  :is(#tab-aggregate, #tab-saga) .saga-flow-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-  :is(#tab-aggregate, #tab-saga) .saga-service-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
 @media (max-width: 720px) {
@@ -4494,16 +4621,6 @@ button {
   :is(#tab-aggregate, #tab-saga) .saga-summary-row {
     grid-template-columns: 1fr !important;
   }
-  :is(#tab-aggregate, #tab-saga) .saga-map-card {
-    padding: 12px !important;
-  }
-  :is(#tab-aggregate, #tab-saga) .saga-service-grid,
-  :is(#tab-aggregate, #tab-saga) .saga-flow-list {
-    grid-template-columns: 1fr !important;
-  }
-  :is(#tab-aggregate, #tab-saga) .saga-service {
-    min-height: 0 !important;
-  }
   :is(#tab-aggregate, #tab-saga) .domain-grid-note {
     grid-template-columns: 1fr !important;
   }
@@ -4542,54 +4659,6 @@ button {
 }
 :is(#tab-aggregate, #tab-saga) :is(#aggregateLab, #sagaLab) .saga-summary b {
   margin-bottom: 7px !important;
-}
-:is(#tab-aggregate, #tab-saga) :is(#aggregateLab, #sagaLab) .saga-arch-grid {
-  gap: 20px !important;
-}
-:is(#tab-aggregate, #tab-saga) :is(#aggregateLab, #sagaLab) .saga-map-card {
-  padding: clamp(15px, 2.1vw, 24px) !important;
-}
-:is(#tab-aggregate, #tab-saga) :is(#aggregateLab, #sagaLab) .saga-map-top {
-  margin: 21px 0 23px !important;
-}
-:is(#tab-aggregate, #tab-saga) :is(#aggregateLab, #sagaLab) .saga-service-grid {
-  gap: 15px !important;
-}
-:is(#tab-aggregate, #tab-saga) :is(#aggregateLab, #sagaLab) .saga-service {
-  padding: 18px 17px !important;
-}
-:is(#tab-aggregate, #tab-saga) :is(#aggregateLab, #sagaLab) .saga-links-rail {
-  margin: 20px 0 14px !important;
-}
-:is(#tab-aggregate, #tab-saga) :is(#aggregateLab, #sagaLab) .saga-map-caption {
-  margin-top: 15px !important;
-  line-height: 1.65 !important;
-}
-:is(#tab-aggregate, #tab-saga) :is(#aggregateLab, #sagaLab) .saga-flow-list {
-  gap: 11px !important;
-  margin: 0 0 5px !important;
-}
-:is(#tab-aggregate, #tab-saga) :is(#aggregateLab, #sagaLab) .saga-step-chip {
-  min-height: 58px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-:is(#tab-aggregate, #tab-saga) :is(#aggregateLab, #sagaLab) .saga-step-chip[data-saga-step] {
-  cursor: pointer;
-  text-align: left;
-  font: inherit;
-  transition: border-color 0.15s,
-    box-shadow 0.15s,
-    background 0.15s;
-}
-:is(#tab-aggregate, #tab-saga) :is(#aggregateLab, #sagaLab) .saga-step-chip[data-saga-step]:hover {
-  border-color: #6ee7b7 !important;
-  background: #f7f7f6 !important;
-}
-:is(#tab-aggregate, #tab-saga) :is(#aggregateLab, #sagaLab) .saga-step-chip[data-saga-step]:focus-visible {
-  outline: 3px solid #047857;
-  outline-offset: 3px;
 }:is(#tab-aggregate, #tab-saga) :is(#aggregateLab, #sagaLab) #sagaControls {
   position: static !important;
   box-shadow: none !important;
@@ -4778,18 +4847,6 @@ button {
   :is(#tab-aggregate, #tab-saga) :is(#aggregateLab, #sagaLab) .saga-summary {
     padding: 13px 14px !important;
   }
-  :is(#tab-aggregate, #tab-saga) :is(#aggregateLab, #sagaLab) .saga-map-card {
-    padding: 13px !important;
-  }
-  :is(#tab-aggregate, #tab-saga) :is(#aggregateLab, #sagaLab) .saga-service {
-    padding: 15px !important;
-  }
-  :is(#tab-aggregate, #tab-saga) :is(#aggregateLab, #sagaLab) .saga-service-grid {
-    gap: 10px !important;
-  }
-  :is(#tab-aggregate, #tab-saga) :is(#aggregateLab, #sagaLab) .saga-flow-list {
-    gap: 8px !important;
-  }
   .playback-dock {
     bottom: calc(8px + env(safe-area-inset-bottom, 0px));
     width: calc(100vw - 18px);
@@ -4845,11 +4902,6 @@ button {
 @media (max-width: 370px) {
   .playback-dock .pd-ticks {
     display: none;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  :is(#tab-aggregate, #tab-saga) :is(#aggregateLab, #sagaLab) .saga-step-chip[data-saga-step] {
-    transition: none !important;
   }
 }
 
@@ -6089,6 +6141,32 @@ button {
   margin-top: 12px;
   font-size: 12.5px;
   line-height: 19px;
+  color: var(--ink-muted);
+}
+.disclosure-body .lesson-label {
+  margin-top: 18px;
+}
+/* Numbered walk-through inside a disclosure, styled like the summary rules. */
+.disclosure-steps {
+  counter-reset: step;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+.disclosure-steps li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--outline);
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ink-2);
+}
+.disclosure-steps li::before {
+  content: counter(step);
+  font: 500 11px/20px var(--font-mono);
   color: var(--ink-muted);
 }
 

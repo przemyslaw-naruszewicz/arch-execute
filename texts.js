@@ -1494,8 +1494,8 @@ window.TEXTS = {
     aggOver: { en: 'EXPERIMENT / ORDER AGGREGATE', pl: 'EKSPERYMENT / AGREGAT ORDER' },
     aggTitle: { en: 'Who adds the final item to an Order?', pl: 'Kto doda ostatnią pozycję do zamówienia?' },
     aggLead: {
-      en: 'Order #42 has one item, and the shop allows at most two per order. The customer has the order open on a phone and on a laptop and clicks “Add item” on both at almost the same moment. Each click is a separate Symfony request that loads the same order.',
-      pl: 'Zamówienie #42 ma jedną pozycję, a sklep pozwala na najwyżej dwie. Klient ma zamówienie otwarte na telefonie i na laptopie i niemal w tej samej chwili klika „Dodaj pozycję” na obu. Każde kliknięcie to osobne żądanie Symfony, które odczytuje to samo zamówienie.',
+      en: 'Order #42 has one item, and the shop allows at most two per order. The customer has the order open on a phone and on a laptop and clicks “Add item” on both at almost the same moment. Each click is a separate Symfony request that changes the same order.',
+      pl: 'Zamówienie #42 ma jedną pozycję, a sklep pozwala na najwyżej dwie. Klient ma zamówienie otwarte na telefonie i na laptopie i niemal w tej samej chwili klika „Dodaj pozycję” na obu. Każde kliknięcie to osobne żądanie Symfony, które zmienia to samo zamówienie.',
     },
     aggTip: {
       en: [
@@ -1639,6 +1639,51 @@ window.TEXTS = {
     outsideRight3: { en: 'Shipping', pl: 'Wysyłka' },
     outsideRight3Desc: { en: 'Owns shipment creation.', pl: 'Odpowiada za utworzenie przesyłki.' },
     codeAgg: { en: 'Symfony / Doctrine · protected variant, mapping fragments', pl: 'Symfony / Doctrine · wariant z ochroną, fragmenty mapowania' },
+    // Collapsed panel under the experiment: the same limit enforced by PostgreSQL, a niche alternative to the aggregate.
+    dbAlt: {
+      summary: {
+        en: 'A niche alternative: the rule in PostgreSQL instead of the aggregate',
+        pl: 'Alternatywa niszowa: reguła w PostgreSQL zamiast w agregacie',
+      },
+      lead: {
+        en: 'PostgreSQL can enforce the same limit by itself. A trigger, a function the database runs after every <code>INSERT</code> into <code>order_items</code>, adds 1 to <code>orders.item_count</code>. The condition <code>CHECK (item_count BETWEEN 0 AND 2)</code> rejects a counter of 3. Next to a correct <code>Order</code> aggregate you do not add this: the rule would exist in two places, and both Doctrine and the trigger would write the counter.',
+        pl: 'Tego samego limitu może pilnować sam PostgreSQL. Trigger, czyli funkcja uruchamiana przez bazę po każdym <code>INSERT</code> do <code>order_items</code>, dodaje 1 do <code>orders.item_count</code>. Warunek <code>CHECK (item_count BETWEEN 0 AND 2)</code> odrzuca licznik równy 3. Obok poprawnego agregatu <code>Order</code> tego nie dodajesz: reguła byłaby w dwóch miejscach, a licznik zmieniałyby i Doctrine, i trigger.',
+      },
+      when: {
+        en: 'It pays off only when programs that bypass <code>Order</code> also write to these tables, for example a legacy system or several applications sharing one database. The database is then the one place every write passes through. The price is a rule hidden in PL/pgSQL: the PHP code does not show it, and you can test it only against a real database. Structural constraints, that is <code>UNIQUE</code>, foreign keys, <code>NOT NULL</code> and a <code>CHECK</code> on one row, belong in the database in every case, next to the aggregate too.',
+        pl: 'Opłaca się to tylko wtedy, gdy do tych tabel piszą też programy, które omijają <code>Order</code>, np. stary system albo kilka aplikacji na jednej bazie. Wtedy baza jest jedynym miejscem, przez które przechodzi każdy zapis. Płacisz za to regułą ukrytą w PL/pgSQL: kod PHP jej nie pokazuje, a przetestujesz ją tylko na prawdziwej bazie. Ograniczenia struktury, czyli <code>UNIQUE</code>, klucze obce, <code>NOT NULL</code> i <code>CHECK</code> na jednym wierszu, dodajesz w bazie zawsze, także obok agregatu.',
+      },
+      raceTitle: { en: 'How the database settles the race from the experiment', pl: 'Jak baza rozstrzyga wyścig z eksperymentu' },
+      steps: {
+        en: [
+          'Request A inserts item #2. The trigger runs <code>UPDATE orders SET item_count = item_count + 1</code>, so A sees 2 and holds the lock on row #42 until COMMIT.',
+          'Request B inserts item #3. The trigger’s <code>UPDATE</code> of row #42 waits for A’s lock.',
+          'A commits item #2 together with <code>item_count = 2</code>. B’s <code>UPDATE</code> continues on the committed row version and computes 3.',
+          'A counter of 3 breaks <code>CHECK order_item_limit</code>. PostgreSQL returns SQLSTATE <code>23514</code> and aborts B’s transaction, so item #3 is never committed.',
+          'Symfony turns SQLSTATE 23514 into <code>OrderItemLimitReached</code>. A retry would hit the same <code>CHECK</code>, so the application reports the error.',
+        ],
+        pl: [
+          'Żądanie A wstawia pozycję #2. Trigger wykonuje <code>UPDATE orders SET item_count = item_count + 1</code>, więc A widzi 2 i trzyma blokadę wiersza #42 aż do COMMIT.',
+          'Żądanie B wstawia pozycję #3. <code>UPDATE</code> wiersza #42 w triggerze czeka na blokadę A.',
+          'A zatwierdza pozycję #2 razem z <code>item_count = 2</code>. <code>UPDATE</code> żądania B działa dalej na zatwierdzonej wersji wiersza i wylicza 3.',
+          'Licznik równy 3 łamie <code>CHECK order_item_limit</code>. PostgreSQL zwraca SQLSTATE <code>23514</code> i przerywa transakcję B, więc pozycja #3 nie zostaje zapisana.',
+          'Symfony zamienia SQLSTATE 23514 na <code>OrderItemLimitReached</code>. Ponowienie trafiłoby na ten sam <code>CHECK</code>, więc aplikacja zgłasza błąd.',
+        ],
+      },
+      pgLead: {
+        en: 'While request B waits (step 2), run the query from chapter 02 in another <code>psql</code> session:',
+        pl: 'Gdy żądanie B czeka (krok 2), uruchom w innej sesji <code>psql</code> zapytanie z rozdziału 02:',
+      },
+      pgRead: {
+        en: '<b>5201</b> is request A: its <code>INSERT</code> is done and the transaction stays open until COMMIT. <b>5202</b> is request B. The <code>query</code> column shows its <code>INSERT</code>, but what waits is the <code>UPDATE orders</code> inside the trigger, because it needs the row A has locked. After A’s COMMIT, B gets this error:',
+        pl: '<b>5201</b> to żądanie A: jego <code>INSERT</code> już się wykonał, a transakcja czeka otwarta na COMMIT. <b>5202</b> to żądanie B. Kolumna <code>query</code> pokazuje jego <code>INSERT</code>, ale czeka <code>UPDATE orders</code> w triggerze, bo potrzebuje wiersza zablokowanego przez A. Po COMMIT A żądanie B dostaje taki błąd:',
+      },
+      pgError: {
+        en: 'The exception message in Symfony contains the same text, but the code checks only SQLSTATE <code>23514</code>. The <code>!</code> in the psql prompt marks a failed transaction: PostgreSQL ignores further commands until it ends.',
+        pl: 'Komunikat wyjątku w Symfony zawiera ten sam tekst, ale kod sprawdza tylko SQLSTATE <code>23514</code>. Wykrzyknik w znaku zachęty psql oznacza nieudaną transakcję: do jej końca PostgreSQL ignoruje kolejne polecenia.',
+      },
+      codeTitle: { en: 'Code: schema, trigger and application service', pl: 'Kod: schemat, trigger i serwis aplikacyjny' },
+    },
     codeSaga: { en: 'Symfony Messenger · Saga orchestrator in the Orders context', pl: 'Symfony Messenger · orkiestrator Sagi w kontekście Zamówień' },
     play: { en: '▶ Play', pl: '▶ Odtwórz' },
     pause: { en: 'Ⅱ Pause', pl: 'Ⅱ Pauza' },
@@ -1702,10 +1747,29 @@ window.TEXTS = {
       en: 'Messages connect the orchestrator and services; production systems need durable delivery, retries and idempotent consumers.',
       pl: 'Komunikaty łączą orkiestrator z usługami; system produkcyjny wymaga trwałego dostarczania, ponowień i idempotentnych odbiorców.',
     },
-    orchestrator: { en: 'Order Saga · process coordinator', pl: 'Saga zamówienia · koordynator procesu' },
+    orchestrator: { en: 'Order Saga', pl: 'Saga zamówienia' },
     orchestratorDesc: {
-      en: 'An application service in the Orders context. Records progress and decides which command to send next.',
-      pl: 'Serwis aplikacyjny w kontekście Zamówień. Zapisuje postęp i decyduje, które polecenie wysłać dalej.',
+      en: 'The Saga is an application service in the Orders context. It saves its current step and decides which command to send next.',
+      pl: 'Saga to serwis aplikacyjny w kontekście Zamówień. Zapisuje bieżący krok i decyduje, które polecenie wysłać dalej.',
+    },
+    sagaStepLabel: { en: 'Saved step', pl: 'Zapisany krok' },
+    clientName: { en: 'Client', pl: 'Klient' },
+    clientTask: { en: 'Sends the order', pl: 'Wysyła zamówienie' },
+    ordersContext: { en: 'Orders context', pl: 'Kontekst Zamówień' },
+    seqStepHead: { en: 'Step', pl: 'Krok' },
+    seqLegend: {
+      command: { en: 'Command: the Saga tells a service what to do', pl: 'Polecenie: Saga zleca usłudze jej część pracy' },
+      event: { en: 'Event: the service reports the result', pl: 'Zdarzenie: usługa zgłasza wynik' },
+      failure: { en: 'The service reports a failure', pl: 'Usługa zgłasza błąd' },
+      compensation: {
+        en: 'Compensation: a new command that reverses an earlier step',
+        pl: 'Kompensacja: nowe polecenie, które odwraca wcześniejszy krok',
+      },
+      localTx: { en: 'Service transaction with its own COMMIT', pl: 'Transakcja usługi z własnym COMMIT' },
+      sagaTx: {
+        en: 'Saga handler: saves the new step and the next command in one transaction',
+        pl: 'Handler Sagi: zapisuje nowy krok i następne polecenie w jednej transakcji',
+      },
     },
     serviceNames: [
       { en: 'Orders service', pl: 'Zamówienia' },
@@ -1713,7 +1777,6 @@ window.TEXTS = {
       { en: 'Payments service', pl: 'Płatności' },
       { en: 'Shipping service', pl: 'Wysyłka' },
     ],
-    localTransaction: { en: 'SERVICE TRANSACTION', pl: 'TRANSAKCJA USŁUGI' },
     sagaFooter: {
       en: 'One service cannot undo another service’s committed transaction. A compensation is a new business action. Time steps are illustrative, not latency measurements.',
       pl: 'Usługa nie może bezpośrednio wycofać zatwierdzonej transakcji innej usługi. Kompensacja to nowa operacja biznesowa. Takty są umowne i nie oznaczają rzeczywistych opóźnień.',
@@ -1738,11 +1801,6 @@ window.TEXTS = {
     sagaNote3: {
       en: 'Duplicates: the handler locks the Saga row and checks the current step, so a second copy of an event changes nothing. If a handler fails, Messenger retries the message.',
       pl: 'Duplikaty: handler blokuje wiersz Sagi i sprawdza bieżący krok, więc drugi egzemplarz zdarzenia niczego nie zmienia. Jeśli handler zakończy się błędem, Messenger ponowi obsługę komunikatu.',
-    },
-    mapMessage: { en: 'Message in this step', pl: 'Komunikat w tym kroku' },
-    noMessage: {
-      en: 'No new message in this step. The diagram shows the current process state.',
-      pl: 'Brak nowego komunikatu w tym kroku. Diagram pokazuje aktualny stan procesu.',
     },
     sagaFlowFailure: [
       { en: 'Create the order', pl: 'Utworzenie zamówienia' },
@@ -1935,7 +1993,6 @@ window.TEXTS = {
       event: { en: 'event', pl: 'zdarzenie' },
       compensation: { en: 'compensation', pl: 'kompensacja' },
     },
-    stateLabel: { en: 'state', pl: 'stan' },
   },
   consistencyNav: {
     primer: { en: 'More about consistency boundaries', pl: 'Więcej o granicach spójności' },
@@ -2301,8 +2358,8 @@ window.TEXTS = {
         pl: 'W rozdziale 02 chroniliśmy jedną liczbę: saldo. W prawdziwej aplikacji reguła często obejmuje kilka obiektów. Na przykład zamówienie może mieć najwyżej dwie pozycje. Metoda <code>Order::addItem()</code> sprawdza limit, ale robi to na kopii danych w pamięci PHP. Jeśli dwa żądania sprawdzą limit w tej samej chwili, oba uznają, że jest miejsce, i w bazie znajdą się trzy pozycje. Domain-Driven Design (DDD) nazywa taką grupę obiektów <em>agregatem</em> i chroni ją jako całość.',
       },
       plan: {
-        en: 'First run the experiment with and without a version check. Then look at the boundary map to see how an aggregate differs from a bounded context. Finally compare the data in PHP memory with the committed state in the database.',
-        pl: 'Najpierw uruchom eksperyment z kontrolą wersji i bez niej. Potem spójrz na mapę granic i zobacz, czym agregat różni się od kontekstu ograniczonego. Na końcu porównaj dane w pamięci PHP ze stanem zatwierdzonym w bazie.',
+        en: 'Run the experiment with and without a version check. Look at the boundary map to see how an aggregate differs from a bounded context. Finally compare the data in PHP memory with the committed state in the database.',
+        pl: 'Uruchom eksperyment z kontrolą wersji i bez niej. Spójrz na mapę granic i zobacz, czym agregat różni się od kontekstu ograniczonego. Na końcu porównaj dane w pamięci PHP ze stanem zatwierdzonym w bazie.',
       },
       terms: [
         {
@@ -2333,6 +2390,7 @@ window.TEXTS = {
           'A rule check in a domain method works on an in-memory copy. Without a version check or a lock, two requests can slip past it.',
           'Change items only through the root, and save the root with its version even when only a child changes. Adding an element to a collection does not bump the <code>Order</code> version by itself.',
           'After a conflict, reload the aggregate and check the rule again. A blind retry of the write would break the limit.',
+          'Keep a business rule that spans many rows in the aggregate: <code>Order</code> is the one place in the code where you look for it. The database guards the structure of the data: <code>UNIQUE</code>, foreign keys, <code>NOT NULL</code>, a <code>CHECK</code> on one row.',
           'Rule of thumb: one transaction changes one aggregate. Pass changes to other aggregates and services through events, which is the topic of chapter 05.',
         ],
         pl: [
@@ -2340,6 +2398,7 @@ window.TEXTS = {
           'Sprawdzenie reguły w metodzie domenowej działa na kopii w pamięci. Bez kontroli wersji lub blokady dwa żądania mogą je obejść.',
           'Zmieniaj pozycje tylko przez korzeń i zapisuj korzeń z wersją, nawet gdy zmienia się tylko pozycja. Samo dodanie elementu do kolekcji nie podbije wersji <code>Order</code>.',
           'Po konflikcie wczytaj agregat ponownie i jeszcze raz sprawdź regułę. Ślepe ponowienie zapisu złamałoby limit.',
+          'Regułę biznesową obejmującą wiele wierszy trzymaj w agregacie: <code>Order</code> to jedno miejsce w kodzie, w którym jej szukasz. Baza pilnuje struktury danych: <code>UNIQUE</code>, kluczy obcych, <code>NOT NULL</code>, <code>CHECK</code> na jednym wierszu.',
           'Zasada praktyczna: jedna transakcja zmienia jeden agregat. Zmiany w innych agregatach i usługach przekazuj zdarzeniami. O tym jest rozdział 05.',
         ],
       },
@@ -2361,14 +2420,17 @@ window.TEXTS = {
           },
         ],
         common: {
-          en: ['In common', 'Both variants run the same <code>addItem()</code> method and the same in-memory limit check. Only the <code>WHERE version = …</code> condition on the write differs.'],
-          pl: ['Wspólne', 'Oba warianty wykonują tę samą metodę <code>addItem()</code> i to samo sprawdzenie limitu w pamięci. Różni je tylko warunek <code>WHERE version = …</code> przy zapisie.'],
+          en: ['In common', 'Both variants start from Order #42 with one item and get the same two simultaneous requests.'],
+          pl: ['Wspólne', 'Oba warianty zaczynają od zamówienia #42 z jedną pozycją i dostają te same dwa równoczesne żądania.'],
         },
       },
       links: [
         ['Martin Fowler: DDD Aggregate', 'https://martinfowler.com/bliki/DDD_Aggregate.html'],
         ['Vaughn Vernon: Effective Aggregate Design', 'https://www.dddcommunity.org/library/vernon_2011/'],
         ['Doctrine: Transactions and Concurrency', 'https://www.doctrine-project.org/projects/doctrine-orm/en/current/reference/transactions-and-concurrency.html'],
+        ['PostgreSQL: Check Constraints', 'https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-CHECK-CONSTRAINTS'],
+        ['PostgreSQL: Trigger Functions in PL/pgSQL', 'https://www.postgresql.org/docs/current/plpgsql-trigger.html'],
+        ['PostgreSQL: Read Committed Isolation Level', 'https://www.postgresql.org/docs/current/transaction-iso.html#XACT-READ-COMMITTED'],
       ],
       next: { en: 'Next chapter: eventual consistency →', pl: 'Następny rozdział: spójność ostateczna →' },
     },
@@ -2386,8 +2448,8 @@ window.TEXTS = {
         pl: 'Planujesz wyjazd i rezerwujesz lot, hotel i samochód na trzech różnych stronach. Gdy wypożyczalnia odmówi, nie cofniesz czasu. Odwołujesz hotel i lot osobno, a każde odwołanie to nowa operacja, która też może się nie udać.',
       },
       plan: {
-        en: 'Run the variant in which shipping fails and watch the coordinator undo the earlier steps. Then compare it with the variant in which everything succeeds. The summary puts immediate and eventual consistency side by side.',
-        pl: 'Uruchom wariant z błędem wysyłki i obserwuj, jak koordynator cofa wcześniejsze kroki. Potem porównaj go z wariantem, w którym wszystko się udaje. Podsumowanie zestawia spójność natychmiastową i ostateczną.',
+        en: 'Run the variant in which shipping fails. On the diagram, follow the commands the coordinator sends and the events each service sends back, then watch it undo the earlier steps in reverse order. Then compare it with the variant in which everything succeeds. The summary puts immediate and eventual consistency side by side.',
+        pl: 'Uruchom wariant z błędem wysyłki. Na schemacie śledź polecenia, które wysyła koordynator, i zdarzenia, którymi odpowiadają usługi, a potem zobacz, jak cofa wcześniejsze kroki w odwrotnej kolejności. Następnie porównaj go z wariantem, w którym wszystko się udaje. Podsumowanie zestawia spójność natychmiastową i ostateczną.',
       },
       terms: [
         {
@@ -2817,6 +2879,16 @@ window.TEXTS = {
       pl: [
         'Kontrola wersji',
         'UPDATE sprawdza wersję odczytaną wcześniej, np. v5. Jeśli inne żądanie zapisało już v6, zapis oparty na nieaktualnych danych zostaje odrzucony.',
+      ],
+    },
+    rowLock: {
+      en: [
+        'Row lock',
+        'UPDATE, DELETE and SELECT … FOR UPDATE lock the rows they touch until COMMIT or ROLLBACK. A second transaction that wants to change the same row waits. In READ COMMITTED it then works on the newly committed version of the row.',
+      ],
+      pl: [
+        'Blokada wiersza',
+        'UPDATE, DELETE i SELECT … FOR UPDATE blokują wiersze, których dotykają, aż do COMMIT albo ROLLBACK. Druga transakcja, która chce zmienić ten sam wiersz, czeka. W READ COMMITTED działa potem na nowo zatwierdzonej wersji wiersza.',
       ],
     },
     txBoundary: {

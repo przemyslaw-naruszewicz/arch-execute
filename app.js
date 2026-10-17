@@ -53,7 +53,7 @@ window.studyUI = (() => {
     }
   }
   function followColumn(el, selected) {
-    const scroller = el.closest(".timeline-container,.ct-scroll");
+    const scroller = el.closest(".timeline-container,.ct-scroll,.saga-seq-scroll");
     if (!scroller || scroller.clientWidth === 0) return;
     if (!selected) {
       scroller.scrollLeft = 0;
@@ -61,10 +61,11 @@ window.studyUI = (() => {
     }
     const frame = scroller.getBoundingClientRect(),
       cell = selected.getBoundingClientRect();
-    const label = el.querySelector(".gantt-label,.ct-label")?.getBoundingClientRect().width || 0;
+    const label = el.querySelector(".gantt-label,.ct-label,.saga-seq-corner")?.getBoundingClientRect().width || 0;
     const left = frame.left + label + 18,
       right = frame.right - 12;
-    if (cell.left < left) scroller.scrollLeft += cell.left - left;
+    // A cell wider than the visible part is aligned by its start.
+    if (cell.left < left || cell.width > right - left) scroller.scrollLeft += cell.left - left;
     else if (cell.right > right) scroller.scrollLeft += cell.right - right;
   }
   // A "?" button whose tooltip is the [title, body] pair at this TEXTS path.
@@ -1695,25 +1696,26 @@ $em->wrapInTransaction(function ($tx) : void {
   aggUnsafeSteps[5] = { A: "confirmed ✓", B: "confirmed ✓", db: "2 / 2", version: 7, conf: 3, active: [1, 2] };
   aggUnsafeSteps[6] = { A: "confirmed ✓", B: "confirmed ✓", db: "2 / 2", version: 7, conf: 3, active: [1] };
   aggUnsafeSteps[7] = { A: "confirmed ✓", B: "confirmed ✓", db: "2 / 2", version: 7, conf: 3, active: [] };
+  // One row per tick. `saga` is the step the Saga has saved in the Orders database (see the code below).
   const sagaFailure = [
-    { order: "—", stock: "1 available", payment: "—", ship: "—", active: [] },
-    { order: "PENDING", stock: "1 available", payment: "—", ship: "—", active: [0] },
-    { order: "PENDING", stock: "RESERVED", payment: "—", ship: "—", active: [1] },
-    { order: "PENDING", stock: "RESERVED", payment: "CHARGED", ship: "—", active: [2] },
-    { order: "PENDING", stock: "RESERVED", payment: "CHARGED", ship: "FAILED", active: [3], error: true },
-    { order: "PENDING", stock: "RESERVED", payment: "REFUNDED", ship: "FAILED", active: [2] },
-    { order: "PENDING", stock: "RELEASED", payment: "REFUNDED", ship: "FAILED", active: [1] },
-    { order: "CANCELLED", stock: "RELEASED", payment: "REFUNDED", ship: "FAILED", active: [0] },
-    { order: "CANCELLED", stock: "RELEASED", payment: "REFUNDED", ship: "FAILED", active: [] },
+    { order: "—", stock: "1 available", payment: "—", ship: "—", saga: "—" },
+    { order: "PENDING", stock: "1 available", payment: "—", ship: "—", saga: "reserving_stock" },
+    { order: "PENDING", stock: "RESERVED", payment: "—", ship: "—", saga: "charging_payment" },
+    { order: "PENDING", stock: "RESERVED", payment: "CHARGED", ship: "—", saga: "creating_shipment" },
+    { order: "PENDING", stock: "RESERVED", payment: "CHARGED", ship: "FAILED", saga: "refunding_payment", error: true },
+    { order: "PENDING", stock: "RESERVED", payment: "REFUNDED", ship: "FAILED", saga: "releasing_stock" },
+    { order: "PENDING", stock: "RELEASED", payment: "REFUNDED", ship: "FAILED", saga: "cancelling" },
+    { order: "CANCELLED", stock: "RELEASED", payment: "REFUNDED", ship: "FAILED", saga: "cancelled" },
+    { order: "CANCELLED", stock: "RELEASED", payment: "REFUNDED", ship: "FAILED", saga: "cancelled" },
   ];
   const sagaSuccess = [
-    { order: "—", stock: "1 available", payment: "—", ship: "—", active: [] },
-    { order: "PENDING", stock: "1 available", payment: "—", ship: "—", active: [0] },
-    { order: "PENDING", stock: "RESERVED", payment: "—", ship: "—", active: [1] },
-    { order: "PENDING", stock: "RESERVED", payment: "CHARGED", ship: "—", active: [2] },
-    { order: "PENDING", stock: "RESERVED", payment: "CHARGED", ship: "SHIPMENT_CREATED", active: [3] },
-    { order: "CONFIRMED", stock: "RESERVED", payment: "CHARGED", ship: "SHIPMENT_CREATED", active: [0] },
-    { order: "CONFIRMED", stock: "RESERVED", payment: "CHARGED", ship: "SHIPMENT_CREATED", active: [] },
+    { order: "—", stock: "1 available", payment: "—", ship: "—", saga: "—" },
+    { order: "PENDING", stock: "1 available", payment: "—", ship: "—", saga: "reserving_stock" },
+    { order: "PENDING", stock: "RESERVED", payment: "—", ship: "—", saga: "charging_payment" },
+    { order: "PENDING", stock: "RESERVED", payment: "CHARGED", ship: "—", saga: "creating_shipment" },
+    { order: "PENDING", stock: "RESERVED", payment: "CHARGED", ship: "SHIPMENT_CREATED", saga: "confirming" },
+    { order: "CONFIRMED", stock: "RESERVED", payment: "CHARGED", ship: "SHIPMENT_CREATED", saga: "completed" },
+    { order: "CONFIRMED", stock: "RESERVED", payment: "CHARGED", ship: "SHIPMENT_CREATED", saga: "completed" },
   ];
   const fmt = (x) => studyUI.texts("consistency.status")[x] ?? x;
   const a = { tick: 0, mode: "protected", timer: null },
@@ -1811,6 +1813,97 @@ final class DoctrineSession implements TransactionalSession
 // or run the command again with a NEW manager: Order is reloaded
 // and addItem() rechecks the limit.
 // Every add/remove method on Order must keep itemCount and items in sync.`;
+  // The collapsed niche alternative: the Order rule enforced by PostgreSQL. Both samples were run against PostgreSQL 17 with a non-superuser role.
+  const aggDbSql = `-- PostgreSQL 17 · a niche alternative: the Order rule enforced by the database.
+-- It shows what the database can enforce by itself, for every writer:
+-- Symfony, a console command, a migration or a person typing in psql.
+
+CREATE TABLE orders (
+    id         bigint PRIMARY KEY,
+    item_count integer NOT NULL DEFAULT 0,
+    -- The invariant, checked whenever a row is inserted or updated.
+    CONSTRAINT order_item_limit CHECK (item_count BETWEEN 0 AND 2)
+);
+
+CREATE TABLE order_items (
+    id         bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    order_id   bigint NOT NULL REFERENCES orders (id),
+    product_id bigint NOT NULL
+);
+
+-- Keeps item_count equal to the number of items. The UPDATE locks the
+-- orders row until COMMIT, so the row works like the aggregate root:
+-- one transaction at a time changes the items of one order.
+-- SECURITY DEFINER: the function runs as the schema owner, so it may
+-- change item_count although the application role may not.
+CREATE FUNCTION order_items_count() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        UPDATE orders SET item_count = item_count + 1 WHERE id = NEW.order_id;
+    ELSE
+        UPDATE orders SET item_count = item_count - 1 WHERE id = OLD.order_id;
+    END IF;
+    RETURN NULL; -- AFTER trigger: the result is ignored
+END;
+$$;
+
+CREATE TRIGGER order_items_count
+AFTER INSERT OR DELETE ON order_items
+FOR EACH ROW EXECUTE FUNCTION order_items_count();
+
+-- The application writes items but cannot change the counter itself.
+GRANT SELECT, INSERT (id) ON orders TO shop_app;
+GRANT SELECT, INSERT, DELETE ON order_items TO shop_app;
+
+-- The race from the animation, READ COMMITTED (the PostgreSQL default):
+-- A: BEGIN; INSERT INTO order_items (order_id, product_id) VALUES (42, 8);
+--    trigger: item_count 1 -> 2, row 42 stays locked by A until COMMIT
+-- B: BEGIN; INSERT INTO order_items (order_id, product_id) VALUES (42, 9);
+--    trigger: UPDATE orders waits for A's lock
+-- A: COMMIT;
+-- B: the UPDATE continues on the committed row version: 2 + 1 = 3
+--    ERROR:  new row for relation "orders" violates check constraint "order_item_limit"
+--    B's transaction is aborted, so its order_items row is never committed.
+
+-- With a correct Order aggregate you do not add this trigger: the rule
+-- would exist twice, and item_count would have two writers, because
+-- Doctrine writes it too. The schema keeps the structure: PRIMARY KEY,
+-- REFERENCES and NOT NULL above, UNIQUE where a value must be unique.
+
+-- Not shown: items never move to another order (no UPDATE of order_id).`;
+  const aggDbPhp = `// Application service for the alternative with the rule in PostgreSQL.
+// There is no Order aggregate here: the use case inserts one row
+// and turns the database error into a domain exception.
+use Doctrine\\DBAL\\Connection;
+use Doctrine\\DBAL\\Exception\\DriverException;
+
+final class AddOrderItemHandler
+{
+    public function __construct(private Connection $db) {}
+
+    public function __invoke(AddOrderItem $command): void
+    {
+        try {
+            // BEGIN ... COMMIT. The trigger runs inside this transaction,
+            // and the orders row stays locked until COMMIT.
+            $this->db->transactional(function (Connection $db) use ($command): void {
+                $db->insert('order_items', [
+                    'order_id' => $command->orderId,
+                    'product_id' => $command->productId,
+                ]);
+            });
+        } catch (DriverException $e) {
+            // 23514 = check_violation; order_item_limit is the only CHECK
+            // on these tables. transactional() has already rolled back.
+            // A retry would fail the same way, so report the rule instead.
+            if ($e->getSQLState() === '23514') {
+                throw new OrderItemLimitReached(previous: $e);
+            }
+            throw $e;
+        }
+    }
+}`;
   const sagaCode = `// Orders context, application layer. The Saga is an application service
 // of the Orders service and orchestrates Inventory, Payments and Shipping.
 // They know nothing about it: they handle commands and publish events.
@@ -1971,6 +2064,14 @@ final class OrderFulfillmentSaga
         }),
     );
   }
+  // Messages of each tick: the command a service receives, then the event it sends back.
+  // Lifelines of the sequence diagram, left to right. The Saga sits next to Orders, whose context it belongs to,
+  // and gets the widest column: every step passes through it. Positions are percentages of the lanes area.
+  const sagaLanes = ["Client UI", "Orders", "Saga", "Inventory", "Payments", "Shipping"];
+  const sagaLaneWeights = [0.8, 1, 1.4, 1, 1, 1];
+  const sagaLaneTotal = sagaLaneWeights.reduce((sum, w) => sum + w, 0);
+  const sagaLaneEdge = (k) => +((sagaLaneWeights.slice(0, k).reduce((sum, w) => sum + w, 0) / sagaLaneTotal) * 100).toFixed(3);
+  const sagaLaneCenter = (k) => +((sagaLaneEdge(k) + sagaLaneEdge(k + 1)) / 2).toFixed(3);
   const sagaLinkPlans = {
     failure: [
       [],
@@ -1988,7 +2089,7 @@ final class OrderFulfillmentSaga
       ],
       [
         { from: "Saga", to: "Shipping", label: "CreateShipment", kind: "command" },
-        { from: "Shipping", to: "Saga", label: "ShipmentFailed", kind: "event", comp: true },
+        { from: "Shipping", to: "Saga", label: "ShipmentFailed", kind: "event", fail: true },
       ],
       [
         { from: "Saga", to: "Payments", label: "RefundPayment", kind: "compensation", comp: true },
@@ -2045,7 +2146,6 @@ final class OrderFulfillmentSaga
     const tr = studyUI.texts("consistency");
     const plan = a.mode === "protected" ? aggSteps : aggUnsafeSteps;
     const r = plan[a.tick],
-      protectedMode = a.mode === "protected",
       bad = r.conf > 2;
     const committedItems = bad ? 3 : r.conf;
     const currentNote =
@@ -2091,17 +2191,19 @@ final class OrderFulfillmentSaga
       $("#" + id).innerHTML =
         `<div class="agg-request-head"><b>${title}</b><span class="agg-status ${cls}">${status}</span></div>` +
         `<div class="agg-request-step">${read}</div>` +
-        `<div class="agg-request-meta"><span>${tr.memoryNote}${termIcon("snapshot")}</span></div>`;
+        `<div class="agg-request-meta"><span>${tr.memoryNote + termIcon("snapshot")}</span></div>`;
     }
     $("#aggDbState").className = `agg-database-card ${bad ? "bad" : ""}`;
     $("#aggDbState").innerHTML =
       `<div class="agg-request-head"><b>${tr.dbTitle}${termIcon("committed")}</b><span class="agg-status ${bad ? "stop" : "done"}">${bad ? tr.bad : tr.okay}</span></div>` +
       `<div class="agg-db-num ${bad ? "bad" : ""}">${committedItems} / 2</div>` +
-      `<div class="agg-db-small"><b>${tr.itemCount}:</b> ${committedItems}<br><b>${tr.orderVersion}:</b> v${r.version}` +
+      `<div class="agg-db-small"><b>${tr.itemCount}:</b> ${committedItems}<br>` +
+      `<b>${tr.orderVersion}:</b> v${r.version}` +
       (bad ? `<br><b>${tr.counter}:</b> 2 <em>(${tr.counterMismatch})</em>` : "") +
       `</div>`;
     $("#aggLiveExplanation").innerHTML = `<b>t${a.tick}:</b> ${currentNote}`;
-    $("#aggPolicyBadge").textContent = protectedMode ? tr.protected : tr.unsafe;
+    $("#aggPolicyBadge").textContent = tr[a.mode];
+    setText("aggCodeSummary", tr.codeAgg);
     setText("aggMapEyebrow", tr.mapOver);
     setText("aggMapLead", tr.mapLead);
     setText("aggContextLabel", tr.context);
@@ -2123,18 +2225,19 @@ final class OrderFulfillmentSaga
     const committedSecondItem =
       a.tick >= 4 ? `<div class="agg-item-card hot"><b>${tr.item2}</b>${tr.item2Saved}</div>` : "";
     const third = bad ? `<div class="agg-item-card bad"><b>${tr.item3}</b>${tr.item3Saved}</div>` : "";
+    const atomicText = tr.atomicText;
     $("#aggBoundaryVisual").innerHTML =
       `<div class="agg-boundary-title"><b>${tr.aggregateLabel}${termIcon("aggregate")}</b><span>${tr.boundaryTag}${termIcon("immediate")}</span></div>` +
       `<div class="agg-root-card"><h6>${tr.root}${termIcon("aggregateRoot")}</h6><p>${tr.rootDescription}</p></div>` +
       `<div class="agg-items-grid ${a.tick < 4 ? "single" : ""}"><div class="agg-item-card"><b>${tr.item1}</b>${tr.item1Description}</div>${committedSecondItem}${third}</div>` +
-      `<div class="agg-boundary-footer">${tr.invariantShort}${termIcon("invariant")}<div style="margin-top:5px">${tr.atomicText}${termIcon("txBoundary")}</div></div>`;
+      `<div class="agg-boundary-footer">${tr.invariantShort}${termIcon("invariant")}<div style="margin-top:5px">${atomicText}${termIcon("txBoundary")}</div></div>`;
     $("#aggInvariant").classList.toggle("bad", bad);
     $("#aggInvariant").innerHTML =
       `<strong>${bad ? tr.invariantBad : tr.invariant}${termIcon("invariant")}</strong><span>${tr.initial}</span>`;
     $("#aggEvent").className = `domain-event ${bad ? "error" : a.tick === plan.length - 1 ? "good" : ""}`;
     $("#aggEvent").innerHTML =
       `<span class="event-count">t${a.tick}</span><div><b>${tr.whatHappened}</b><p>${currentNote}</p></div>`;
-    $("#aggFoot").innerHTML = `<strong>${tr.remember}</strong> ${tr.atomicText}`;
+    $("#aggFoot").innerHTML = `<strong>${tr.remember}</strong> ${atomicText}`;
     $("#aggCounter").textContent = `t = ${a.tick} / ${plan.length - 1}`;
     $("#aggControls [data-act=play]").textContent = a.timer
       ? tr.pause
@@ -2155,21 +2258,42 @@ final class OrderFulfillmentSaga
     const ui = studyUI.texts("consistency");
     const plan = s.mode === "failure" ? sagaFailure : sagaSuccess;
     const r = plan[s.tick];
-    const links = sagaLinkPlans[s.mode][s.tick] || [];
+    const steps = sagaLinkPlans[s.mode];
+    const links = steps[s.tick] || [];
     renderTrack($("#sagaTrack"), plan.length, s.tick, s, renderSaga);
     const event = ui.sagaEvents[s.mode][s.tick];
+    const names = ui.nodeNames;
+    const kLabel = (k) => ui.linkKinds[k] || k;
+    const lane = (name) => sagaLanes.indexOf(name);
+    const involved = new Set(links.flatMap((m) => [m.from, m.to]));
+    // Lifeline heads: each service shows the state committed in its own database.
     const serviceKeys = ["sagaSvcOrder", "sagaSvcInventory", "sagaSvcPayment", "sagaSvcShipping"];
+    const serviceLanes = ["Orders", "Inventory", "Payments", "Shipping"];
     const rawStates = [r.order, r.stock, r.payment, r.ship];
-    const serviceTasks = ui.serviceTasks;
     for (let i = 0; i < 4; i++) {
-      const current = serviceKeys[i],
-        isActive = r.active.includes(i);
-      const inComp = s.mode === "failure" && s.tick >= [7, 6, 5, 99][i] && i < 3;
-      $("#" + current).className = `saga-service ${isActive ? "active" : ""} ${inComp ? "comp" : ""}`;
-      $("#" + current).innerHTML =
-        `<b>${ui.serviceNames[i]}</b><div class="s-state">${fmt(rawStates[i])}</div>` +
-        `<span class="tx-tag">${ui.localTransaction}${termIcon("localTx")}</span><div class="s-note">${serviceTasks[i]}</div>`;
+      const inComp = s.mode === "failure" && s.tick >= [7, 6, 5, 99][i];
+      const tone =
+        rawStates[i] === "FAILED" ? "fail" : inComp ? "comp" : involved.has(serviceLanes[i]) ? "active" : "";
+      $("#" + serviceKeys[i]).className = `saga-seq-head ${tone}`;
+      $("#" + serviceKeys[i]).innerHTML =
+        `<b>${ui.serviceNames[i]}</b><div class="s-state">${fmt(rawStates[i])}</div><div class="s-note">${ui.serviceTasks[i]}</div>`;
     }
+    $("#sagaClient").className = `saga-seq-head is-client ${involved.has("Client UI") ? "active" : ""}`;
+    $("#sagaClient").innerHTML = `<b>${ui.clientName}</b><div class="s-note">${ui.clientTask}</div>`;
+    $("#sagaOrchestrator").className = "saga-seq-head is-saga";
+    studyUI.replaceHTML(
+      $("#sagaOrchestrator"),
+      `<small>${ui.coordinatorLabel}</small><b>${ui.orchestrator}${termIcon("orchestrator")}</b>` +
+        `<div class="s-note">${ui.sagaStepLabel}</div><code class="s-state">${r.saga}</code>`,
+    );
+    setText("sagaStepsHead", ui.seqStepHead);
+    // The Orders context frames the Orders lane and the Saga lane: the Saga is part of Orders, not a separate service.
+    const seq = $(".saga-seq"),
+      context = $("#sagaContext");
+    seq.style.setProperty("--seq-cols", sagaLaneWeights.map((w) => `minmax(0, ${w}fr)`).join(" "));
+    context.style.setProperty("--x", sagaLaneEdge(lane("Orders")));
+    context.style.setProperty("--w", sagaLaneEdge(lane("Saga") + 1) - sagaLaneEdge(lane("Orders")));
+    studyUI.replaceHTML(context, `<span class="saga-seq-context-label">${ui.ordersContext}${termIcon("boundedContext")}</span>`);
     setText("sagaSummary1Title", ui.sagaSummary1Title);
     setText("sagaSummary2Title", ui.sagaSummary2Title);
     setText("sagaSummary3Title", ui.sagaSummary3Title);
@@ -2184,32 +2308,67 @@ final class OrderFulfillmentSaga
       `<b>${ui.sagaOut}</b><p>${s.mode === "failure" ? ui.sagaDoneFail : ui.sagaDoneOk}</p>`;
     $("#sagaBusCard").innerHTML =
       `<b>${ui.sagaBus}${termIcon("outbox")}${termIcon("idempotency")}</b><p>${ui.sagaBusDesc}</p>`;
-    $("#sagaOrchestrator").innerHTML =
-      `<small>${ui.coordinatorLabel}</small><b>${ui.orchestrator}${termIcon("orchestrator")}</b><span>${ui.orchestratorDesc}</span>`;
-    const names = ui.nodeNames;
-    const kLabel = (k) => ui.linkKinds[k] || k;
-    $("#sagaLinks").innerHTML = links.length
-      ? links
-          .map(
-            (item) =>
-              `<div class="saga-link ${item.comp ? "comp active" : "active"}">` +
-              `<span class="kind">${kLabel(item.kind)}</span><span><span class="dir">${names[item.from] || item.from} → ${names[item.to] || item.to}</span><br><code>${item.label}</code></span><span>${item.comp ? kLabel("compensation") : kLabel(item.kind)}</span></div>`,
-          )
-          .join("")
-      : `<div class="saga-link"><span class="kind">${ui.stateLabel}</span><span>${ui.noMessage}</span><span></span></div>`;
+    // Sequence diagram: two rows per step, the command (or request) and the event sent back.
+    // Steps up to the current tick are drawn; the step labels on the left show the whole scenario.
     const actions = s.mode === "failure" ? ui.sagaFlowFailure : ui.sagaFlowSuccess;
+    let stepRows = "",
+      drawn = "";
+    actions.forEach((txt, i) => {
+      const t = i + 1,
+        msgs = steps[t],
+        row = i * 2;
+      const done = s.tick >= t,
+        current = s.tick === t;
+      const tone = msgs.some((m) => m.fail) ? "fail" : msgs.some((m) => m.comp) ? "comp" : "";
+      stepRows +=
+        `<div class="saga-seq-step ${done ? "done" : ""} ${current ? "current" : ""} ${tone}">` +
+        `<div data-saga-step="${t}" role="button" tabindex="0" aria-current="${current ? "step" : "false"}" class="saga-step-chip"><span class="saga-step-no">${t}</span><span class="saga-step-name">${txt}</span></div></div>`;
+      if (!done) return;
+      // The service that receives the first message commits its own transaction before it answers.
+      drawn += `<span class="saga-seq-tx ${tone || "ok"}" style="--x:${sagaLaneCenter(lane(msgs[0].to))};--row:${row}"></span>`;
+      // The Saga handles the event in one transaction of the Orders database: it saves its new step and puts
+      // the next command in the outbox. The box reaches down to that command once the next step is drawn.
+      const nextDrawn = s.tick > t && t < actions.length;
+      drawn += `<span class="saga-seq-tx saga" style="--x:${sagaLaneCenter(lane("Saga"))};--row:${row + 1};--h:${nextDrawn ? 1 : 0.5}"></span>`;
+      msgs.forEach((m, j) => {
+        const from = lane(m.from),
+          to = lane(m.to),
+          left = Math.min(from, to),
+          right = Math.max(from, to);
+        // Every end except the client's touches a transaction box and stops at its edge.
+        drawn +=
+          `<div class="saga-msg ${m.kind === "event" ? "reply" : "call"} ${to < from ? "left" : ""} ${m.fail ? "fail" : m.comp ? "comp" : ""} ${left > 0 ? "in-l" : ""} in-r ${current ? `current step-${tone || "ok"}` : ""}" style="--x:${sagaLaneCenter(left)};--w:${+(sagaLaneCenter(right) - sagaLaneCenter(left)).toFixed(3)};--row:${row + j}">` +
+          `<i class="saga-msg-line"></i><span class="saga-msg-label"><span class="sr-only">${kLabel(m.kind)}, ${names[m.from]} → ${names[m.to]}: </span><code>${m.label}</code></span></div>`;
+      });
+    });
+    const lifelines = sagaLanes
+      .map((name, i) => `<span class="saga-seq-life ${name === "Saga" ? "is-saga" : ""}" style="--x:${sagaLaneCenter(i)}"></span>`)
+      .join("");
     studyUI.replaceHTML(
       $("#sagaFlowList"),
-      actions
-        .map((txt, i) => {
-          const completed = s.tick >= i + 1;
-          const isCurrent = s.tick === i + 1;
-          const isComp = s.mode === "failure" && i >= 4;
-          return `<div data-saga-step="${i + 1}" role="button" tabindex="0" class="saga-step-chip ${completed ? "active" : ""} ${isComp && completed ? "comp" : ""} ${isCurrent ? "saga-flow-current" : ""}"><span class="saga-step-no">${i + 1}</span><span>${txt}${isCurrent ? " ←" : ""}</span></div>`;
-        })
-        .join(""),
+      stepRows + `<div class="saga-seq-lanes" id="sagaLinks">${lifelines}${drawn}</div>`,
     );
-    setText("sagaMapCaption", ui.sagaFooter);
+    // On a narrow screen the diagram scrolls sideways: bring the event of the current step into view.
+    studyUI.followColumn($(".saga-seq"), [...$("#sagaLinks").querySelectorAll(".saga-msg.current")].pop());
+    const legend = [
+      ["call", ui.seqLegend.command],
+      ["reply", ui.seqLegend.event],
+      ...(s.mode === "failure"
+        ? [
+            ["reply fail", ui.seqLegend.failure],
+            ["call comp", ui.seqLegend.compensation],
+          ]
+        : []),
+    ];
+    studyUI.replaceHTML(
+      $("#sagaLegend"),
+      legend
+        .map(([cls, txt]) => `<span class="saga-key"><i class="saga-msg ${cls}"><i class="saga-msg-line"></i></i>${txt}</span>`)
+        .join("") +
+        `<span class="saga-key"><i class="saga-key-tx"></i>${ui.seqLegend.localTx}${termIcon("localTx")}</span>` +
+        `<span class="saga-key"><i class="saga-key-tx saga"></i>${ui.seqLegend.sagaTx}${termIcon("outbox")}</span>`,
+    );
+    setText("sagaMapCaption", `${ui.orchestratorDesc} ${ui.sagaFooter}`);
     $("#sagaEvent").className = `domain-event ${r.error ? "error" : s.tick === plan.length - 1 ? "good" : ""}`;
     $("#sagaEvent").innerHTML =
       `<span class="event-count">t${s.tick}</span><div><b>${event[0]}</b><p>${event[1]}</p></div>`;
@@ -2281,7 +2440,6 @@ final class OrderFulfillmentSaga
       sagaOverline: u.sagaOver,
       sagaTitle: u.sagaTitle,
       sagaLead: u.sagaLead + studyUI.tipButton("consistency.sagaTip"),
-      aggCodeSummary: u.codeAgg,
       sagaCodeSummary: u.codeSaga,
       aggMapEyebrow: u.mapOver,
       aggMapLead: u.mapLead,
@@ -2323,6 +2481,8 @@ final class OrderFulfillmentSaga
   attach("#aggControls", a, renderAgg, () => aggSteps.length);
   attach("#sagaControls", s, renderSaga, () => (s.mode === "failure" ? sagaFailure.length : sagaSuccess.length));
   studyUI.setCode($("#aggCode"), aggCode);
+  studyUI.setCode($("#aggDbSql"), aggDbSql);
+  studyUI.setCode($("#aggDbPhp"), aggDbPhp);
   studyUI.setCode($("#sagaCode"), sagaCode);
   document.querySelectorAll(".langbtn").forEach((b) => b.addEventListener("click", renderI18n));
   document.querySelectorAll("[data-tab]").forEach((b) =>

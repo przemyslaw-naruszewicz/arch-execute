@@ -657,6 +657,39 @@ server {
     <div class="domain-actors" id="aggActors"></div>
     <div class="domain-foot" id="aggFoot"></div>
     <div class="popout-target" data-popout=""><details><summary id="aggCodeSummary"></summary><div class="domain-code" id="aggCode" data-code="php"></div></details></div>
+    <details class="disclosure agg-db-alternative"><summary data-t="consistency.dbAlt.summary"></summary>
+    <div class="disclosure-body">
+    <p class="disclosure-lead" data-t-html="consistency.dbAlt.lead"></p>
+    <p class="disclosure-lead" data-t-html="consistency.dbAlt.when"></p>
+    <h4 class="lesson-label"><span data-t="consistency.dbAlt.raceTitle"></span><button aria-label="Glossary: row lock" class="tip-button" data-term="rowLock" title="Glossary / Słowniczek" type="button">?</button></h4>
+    <ol class="disclosure-steps" data-lesson-list="consistency.dbAlt.steps"></ol>
+    <p class="disclosure-lead" data-t-html="consistency.dbAlt.pgLead"></p>
+    <figure class="term"><figcaption class="term-bar">psql</figcaption><pre class="term-body">SELECT pid, state, wait_event_type, wait_event,
+       pg_blocking_pids(pid) AS blocked_by,
+       left(query, 40) AS query
+FROM pg_stat_activity
+WHERE backend_type = 'client backend'
+  AND pid &lt;&gt; pg_backend_pid();
+
+ pid  |        state        | wait_event_type |  wait_event   | blocked_by |                  query
+------+---------------------+-----------------+---------------+------------+------------------------------------------
+ 5201 | idle in transaction | Client          | ClientRead    | {}         | INSERT INTO order_items (order_id, produ
+ 5202 | active              | Lock            | transactionid | {5201}     | INSERT INTO order_items (order_id, produ
+(2 rows)</pre></figure>
+    <p class="disclosure-lead" data-t-html="consistency.dbAlt.pgRead"></p>
+    <figure class="term"><figcaption class="term-bar">psql</figcaption><pre class="term-body">shop=*&gt; INSERT INTO order_items (order_id, product_id) VALUES (42, 9);
+ERROR:  new row for relation "orders" violates check constraint "order_item_limit"
+DETAIL:  Failing row contains (42, 3).
+CONTEXT:  SQL statement "UPDATE orders SET item_count = item_count + 1 WHERE id = NEW.order_id"
+PL/pgSQL function order_items_count() line 4 at SQL statement
+shop=!&gt; ROLLBACK;
+ROLLBACK</pre></figure>
+    <p class="disclosure-note" data-t-html="consistency.dbAlt.pgError"></p>
+    <h4 class="lesson-label" data-t="consistency.dbAlt.codeTitle"></h4>
+    <div class="domain-code" id="aggDbSql" data-code="sql"></div>
+    <div class="domain-code" id="aggDbPhp" data-code="php"></div>
+    </div>
+    </details>
   </div>
   <p class="source"><span data-t="consistency.sources"></span> <a href="https://www.doctrine-project.org/projects/doctrine-orm/en/current/reference/transactions-and-concurrency.html" target="_blank" rel="noopener">Doctrine ORM locks ↗</a> · <a href="https://www.doctrine-project.org/projects/doctrine-orm/en/current/cookbook/aggregate-fields.html" target="_blank" rel="noopener">Doctrine Aggregate Fields ↗</a></p>
 </div>
@@ -710,30 +743,37 @@ server {
     <div class="domain-track" id="sagaTrack" role="group" aria-label="Saga timeline"></div>
     <div class="domain-event" id="sagaEvent" aria-live="polite"></div>
     <div class="saga-explainer">
-      <div class="saga-arch-grid">
-        <div class="saga-map-card">
-          <details class="ux-extra-primer ux-saga-extra"><summary data-t="consistencyNav.extra"></summary>
-            <div class="saga-network">
-              <div class="saga-client-card" id="sagaClientCard"></div>
-              <div class="saga-guidance-card" id="sagaLocalTxCard"></div>
-              <div class="saga-guidance-card" id="sagaEventualCard"></div>
-              <div class="saga-guidance-card" id="sagaCompCard"></div>
-              <div class="saga-guidance-card" id="sagaOutcomeCard"></div>
-              <div class="saga-bus-card" id="sagaBusCard"></div>
-            </div>
-          </details>
-          <div class="saga-map-top"><div class="saga-orchestrator" id="sagaOrchestrator"></div></div>
-          <div class="saga-service-grid">
-            <div class="saga-service" id="sagaSvcOrder"></div>
-            <div class="saga-service" id="sagaSvcInventory"></div>
-            <div class="saga-service" id="sagaSvcPayment"></div>
-            <div class="saga-service" id="sagaSvcShipping"></div>
-          </div>
-          <div class="saga-links-rail" id="sagaLinks"></div>
-          <p class="saga-map-caption" id="sagaMapCaption"></p>
+      <details class="ux-extra-primer ux-saga-extra"><summary data-t="consistencyNav.extra"></summary>
+        <div class="saga-network">
+          <div class="saga-client-card" id="sagaClientCard"></div>
+          <div class="saga-guidance-card" id="sagaLocalTxCard"></div>
+          <div class="saga-guidance-card" id="sagaEventualCard"></div>
+          <div class="saga-guidance-card" id="sagaCompCard"></div>
+          <div class="saga-guidance-card" id="sagaOutcomeCard"></div>
+          <div class="saga-bus-card" id="sagaBusCard"></div>
         </div>
-        <div class="saga-flow-list" id="sagaFlowList"></div>
-      </div>
+      </details>
+      <figure class="saga-seq-figure">
+        <div class="saga-seq-scroll">
+          <div class="saga-seq">
+            <div class="saga-seq-context" id="sagaContext"></div>
+            <div class="saga-seq-heads">
+              <div class="saga-seq-corner" id="sagaStepsHead"></div>
+              <div class="saga-seq-head" id="sagaClient"></div>
+              <div class="saga-seq-head" id="sagaSvcOrder"></div>
+              <div class="saga-seq-head" id="sagaOrchestrator"></div>
+              <div class="saga-seq-head" id="sagaSvcInventory"></div>
+              <div class="saga-seq-head" id="sagaSvcPayment"></div>
+              <div class="saga-seq-head" id="sagaSvcShipping"></div>
+            </div>
+            <div class="saga-seq-body" id="sagaFlowList"></div>
+          </div>
+        </div>
+        <figcaption>
+          <div class="saga-seq-legend" id="sagaLegend"></div>
+          <p class="saga-seq-caption" id="sagaMapCaption"></p>
+        </figcaption>
+      </figure>
     </div>
     <div class="domain-actors" id="sagaActors"></div>
     <div class="domain-foot" id="sagaFoot"></div>
