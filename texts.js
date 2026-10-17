@@ -1554,8 +1554,8 @@ window.TEXTS = {
     },
     outsideLeft1: { en: 'AddOrderItem application service', pl: 'Serwis aplikacyjny AddOrderItem' },
     outsideLeft1Desc: {
-      en: 'Loads Order by OrderId, calls addItem() and sets the transaction boundary.',
-      pl: 'Pobiera Order po OrderId, wywołuje addItem() i wyznacza granicę transakcji.',
+      en: 'Loads Order by OrderId, calls addItem() and commits the change in one transaction.',
+      pl: 'Pobiera Order według OrderId, wywołuje addItem() i zatwierdza zmianę w jednej transakcji.',
     },
     outsideLeft2: { en: 'Order list read model', pl: 'Model odczytu listy zamówień' },
     outsideLeft2Desc: {
