@@ -21,10 +21,18 @@ window.studyUI = (() => {
       path.split(".").reduce((node, key) => node?.[key], window.TEXTS),
       language(),
     );
+  // Missing copy must fail visibly in development and in the browser test report.
+  const translatedText = (path) => {
+    const value = texts(path);
+    if (typeof value !== "string") {
+      throw new Error(`Missing or invalid translation: ${path} (${language()})`);
+    }
+    return value;
+  };
   // text('version',{n:2}) reads TEXTS.ui.version; a dotted key reads any other section.
   const text = (key, values = {}) => {
-    const value = texts(key.includes(".") ? key : "ui." + key) ?? key;
-    return String(value).replace(/\{(\w+)\}/g, (_, name) => String(values[name] ?? ""));
+    const value = translatedText(key.includes(".") ? key : "ui." + key);
+    return value.replace(/\{(\w+)\}/g, (_, name) => String(values[name] ?? ""));
   };
   const setText = (el, key, values = {}) => {
     if (el) el.textContent = text(key, values);
@@ -74,14 +82,16 @@ window.studyUI = (() => {
   // Fill every element marked with data-t (plain text), data-t-html (inline HTML) or data-t-content (content attribute).
   function applyTexts() {
     document.querySelectorAll("[data-t]").forEach((el) => {
-      el.textContent = texts(el.dataset.t) ?? el.dataset.t;
+      // Aggregate and Saga timeline buttons also use data-t, for numeric positions.
+      if (/^\d+$/.test(el.dataset.t)) return;
+      el.textContent = translatedText(el.dataset.t);
     });
     document.querySelectorAll("[data-t-content]").forEach((el) => {
-      el.content = texts(el.dataset.tContent) ?? el.dataset.tContent;
+      el.content = translatedText(el.dataset.tContent);
     });
     document
       .querySelectorAll("[data-t-html]")
-      .forEach((el) => replaceHTML(el, texts(el.dataset.tHtml) ?? el.dataset.tHtml));
+      .forEach((el) => replaceHTML(el, translatedText(el.dataset.tHtml)));
     document.documentElement.lang = language();
   }
   // Light syntax colouring for code samples. At each position the first matching rule wins;
