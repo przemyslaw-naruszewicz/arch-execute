@@ -458,8 +458,8 @@ window.studyUI = (() => {
   }
   function renderGantt(el, rows, total, now, groupAt = [], allowScrub = true, boundaryClock = false) {
     const cols = Math.max(total, 1),
-      // PHP metrics describe the interval starting at now; other experiments show the last elapsed interval.
-      limit = Math.min(boundaryClock && now > 0 ? now + 1 : now, total),
+      // PHP metrics describe the interval starting at now (column 0 at t = 0); other experiments show the last elapsed interval.
+      limit = Math.min(boundaryClock ? now + 1 : now, total),
       selected = boundaryClock ? now : now - 1;
     let html = `<div class="gantt-row" style="--cols:${cols}"><div class="gantt-label subhead">${ui.text("time")}</div>`;
     for (let t = 0; t < cols; t++)
@@ -496,7 +496,8 @@ window.studyUI = (() => {
     if (!phpModel) return;
     const { workerRows, coreRows, requests, duration, metrics } = phpModel;
     const runtimeKey = (key) =>
-      state.environment === "builtin" && ["busy", "queued", "blocked", "processing", "boundaryDetail"].includes(key)
+      state.environment === "builtin" &&
+      ["busy", "queued", "blocked", "processing", "initialDetail", "boundaryDetail"].includes(key)
         ? "simulation.builtin." + key
         : key;
     const label = (key, values) => ui.text(runtimeKey(key), values);
@@ -538,12 +539,8 @@ window.studyUI = (() => {
     $("#phpNext").disabled = state.phpTick >= duration;
     playbackLabels();
     const t = state.phpTick;
-    const m =
-      t === 0
-        ? { queued: requests.filter((r) => r.arrival === 0).length, busy: 0, io: 0, cores: 0, finished: 0 }
-        : t >= duration
-          ? { queued: 0, busy: 0, io: 0, cores: 0, finished: requests.length }
-          : metrics[t];
+    // At t = 0 the requests have arrived and idle workers already took the first ones (column 0).
+    const m = t >= duration ? { queued: 0, busy: 0, io: 0, cores: 0, finished: requests.length } : metrics[t];
     $("#phpMetrics").innerHTML = [
       ["queue", m.queued],
       ["busy", m.busy],
@@ -554,7 +551,7 @@ window.studyUI = (() => {
       .join("");
     ui.setText(
       $("#phpNow"),
-      runtimeKey(t === 0 ? "before" : t >= duration ? "complete" : m.queued ? "queued" : m.io ? "blocked" : "processing"),
+      runtimeKey(t >= duration ? "complete" : m.queued ? "queued" : m.io ? "blocked" : "processing"),
       { n: m.queued || m.io },
     );
     ui.setText($("#phpNowDetail"), runtimeKey(t === 0 ? "initialDetail" : "boundaryDetail"), {
@@ -565,7 +562,7 @@ window.studyUI = (() => {
     });
     $("#phpRequests").innerHTML = requests
       .map((r) => {
-        const ph = t === 0 ? (r.arrival === 0 ? "queue" : "absent") : r.doneAt <= t ? "done" : r.states[t] || "absent";
+        const ph = r.doneAt <= t ? "done" : r.states[t] || "absent";
         return `<span class="request-pill ${ph}">${r.id} · ${label("phase_" + ph)}</span>`;
       })
       .join("");
@@ -584,7 +581,7 @@ window.studyUI = (() => {
   function renderLinux(m, t) {
     const { workerRows, coreRows, requests, duration, workers, cores, metrics } = phpModel;
     const builtin = state.environment === "builtin",
-      live = t > 0 && t < duration,
+      live = t < duration,
       note = (key, values) => esc(ui.text("linux.notes." + key, values)),
       cells = workerRows.map((row) => (live ? row[t] : { id: "", phase: "idle" })),
       runnable = (cell) => cell?.phase === "cpu" || cell?.phase === "ready",
@@ -650,8 +647,8 @@ window.studyUI = (() => {
       memText = (used / 1048576).toFixed(2) + "G/3.83G";
     // Load average assumes the selected scenario kept repeating during the last minute.
     let runnableSum = 0;
-    for (let x = 1; x < duration; x++) runnableSum += workerRows.filter((row) => runnable(row[x])).length;
-    const load = runnableSum / Math.max(1, duration - 1) + 0.05,
+    for (let x = 0; x < duration; x++) runnableSum += workerRows.filter((row) => runnable(row[x])).length;
+    const load = runnableSum / Math.max(1, duration) + 0.05,
       loads = [load, load * 0.6 + 0.04, load * 0.35 + 0.03].map((v) => v.toFixed(2)).join(" ");
     // Tasks counts the whole system, plus htop itself in state R while it reads /proc.
     const running = cells.filter(runnable).length + 1;
@@ -680,8 +677,8 @@ window.studyUI = (() => {
     if (builtin) $("#phpFpmStatus").innerHTML = `<p class="term-text">${esc(ui.text("linux.builtinStatus"))}</p>`;
     else {
       const accepted =
-          t === 0 ? 0 : t >= duration ? requests.length : requests.filter((r) => r.startAt !== null && r.startAt <= t).length,
-        seen = metrics.slice(1, Math.min(t, duration - 1) + 1),
+          t >= duration ? requests.length : requests.filter((r) => r.startAt !== null && r.startAt <= t).length,
+        seen = metrics.slice(0, Math.min(t, duration - 1) + 1),
         maxQueue = Math.max(m.queued, ...seen.map((x) => x.queued)),
         maxActive = Math.max(m.busy, ...seen.map((x) => x.busy));
       const line = (key, value, comment = "") =>

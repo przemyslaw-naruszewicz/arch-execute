@@ -60,14 +60,13 @@ window.TEXTS = {
     phase_io: { en: 'I/O wait', pl: 'oczekiwanie na I/O' },
     phase_ready: { en: 'CPU wait', pl: 'oczekiwanie na CPU' },
     phase_done: { en: 'complete', pl: 'zakończone' },
-    before: { en: 'Before processing', pl: 'Przed rozpoczęciem' },
     complete: { en: 'All requests complete', pl: 'Wszystkie żądania zakończone' },
     queued: { en: 'Waiting for an FPM worker: {n}', pl: 'Żądania oczekujące na workera FPM: {n}' },
     blocked: { en: 'FPM workers blocked on I/O: {n}', pl: 'Workery FPM oczekujące na I/O: {n}' },
     processing: { en: 'FPM workers processing requests', pl: 'Workery FPM obsługują żądania' },
     initialDetail: {
-      en: 'Click Play, Next, or a timestamp to explore the timeline.',
-      pl: 'Kliknij Odtwórz, Dalej lub wybraną chwilę na osi czasu.',
+      en: 'State at t = {t}: {busy} occupied FPM workers, {cores} cores executing PHP. The highlighted column shows this state. Click Play, Next, or a timestamp to explore the timeline.',
+      pl: 'Stan w t = {t}: zajęte workery FPM: {busy}, rdzenie wykonujące PHP: {cores}. Wyróżniona kolumna pokazuje ten sam stan. Kliknij Odtwórz, Dalej lub wybraną chwilę na osi czasu.',
     },
     boundaryDetail: {
       en: 'State at t = {t}: {busy} occupied FPM workers, {cores} cores executing PHP. The highlighted column shows this state. The interval [{previous}, {t}) has ended.',
@@ -301,6 +300,10 @@ window.TEXTS = {
       queued: { en: 'Waiting for the php -S process: {n}', pl: 'Żądania oczekujące na proces php -S: {n}' },
       blocked: { en: 'php -S processes blocked on I/O: {n}', pl: 'Procesy php -S oczekujące na I/O: {n}' },
       processing: { en: 'The php -S process is handling a request', pl: 'Proces php -S obsługuje żądanie' },
+      initialDetail: {
+        en: 'State at t = {t}: {busy} occupied php -S processes, {cores} cores executing PHP. The highlighted column shows this state. Click Play, Next, or a timestamp to explore the timeline.',
+        pl: 'Stan w t = {t}: zajęte procesy php -S: {busy}, rdzenie wykonujące PHP: {cores}. Wyróżniona kolumna pokazuje ten sam stan. Kliknij Odtwórz, Dalej lub wybraną chwilę na osi czasu.',
+      },
       boundaryDetail: {
         en: 'State at t = {t}: {busy} occupied php -S processes, {cores} cores executing PHP. The highlighted column shows this state. The interval [{previous}, {t}) has ended.',
         pl: 'Stan w t = {t}: zajęte procesy php -S: {busy}, rdzenie wykonujące PHP: {cores}. Wyróżniona kolumna pokazuje ten sam stan. Przedział [{previous}, {t}) już się zakończył.',
