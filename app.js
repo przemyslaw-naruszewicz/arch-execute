@@ -402,6 +402,12 @@ window.studyUI = (() => {
     stopCompare();
   }
   function updateControls() {
+    const builtin = state.environment === "builtin";
+    $$("[data-php-copy]").forEach((el) => {
+      el.dataset.t = "simulation." + (builtin ? "builtin." : "") + el.dataset.phpCopy;
+      ui.setText(el, el.dataset.t);
+    });
+    $("[data-php-process-tip]").dataset.term = builtin ? "builtIn" : "worker";
     ui.setText($("#incomingCount"), "simulation.userCount." + state.users);
     $$("[data-set]").forEach((group) => {
       const key = group.dataset.set;
@@ -487,7 +493,11 @@ window.studyUI = (() => {
   function renderPHP() {
     if (!phpModel) return;
     const { workerRows, coreRows, requests, duration, metrics } = phpModel;
-    const label = (key, values) => ui.text(key, values);
+    const runtimeKey = (key) =>
+      state.environment === "builtin" && ["busy", "queued", "blocked", "processing", "boundaryDetail"].includes(key)
+        ? "simulation.builtin." + key
+        : key;
+    const label = (key, values) => ui.text(runtimeKey(key), values);
     const rows = [
       ...workerRows.map((r, i) => ({
         label: state.environment === "builtin" ? label("dev") : label("fpm", { n: i + 1 }),
@@ -541,10 +551,10 @@ window.studyUI = (() => {
       .join("");
     ui.setText(
       $("#phpNow"),
-      t === 0 ? "before" : t >= duration ? "complete" : m.queued ? "queued" : m.io ? "blocked" : "processing",
+      runtimeKey(t === 0 ? "before" : t >= duration ? "complete" : m.queued ? "queued" : m.io ? "blocked" : "processing"),
       { n: m.queued || m.io },
     );
-    ui.setText($("#phpNowDetail"), t === 0 ? "initialDetail" : "boundaryDetail", {
+    ui.setText($("#phpNowDetail"), runtimeKey(t === 0 ? "initialDetail" : "boundaryDetail"), {
       t,
       busy: m.busy,
       cores: m.cores,
@@ -693,7 +703,7 @@ window.studyUI = (() => {
         ].join("") +
         "</table>";
     }
-    ui.setText($("#htopConfig"), "linux.config", {
+    ui.setText($("#htopConfig"), builtin ? "simulation.builtin.config" : "linux.config", {
       env: builtin ? "php -S" : "PHP-FPM",
       workers,
       cores,
