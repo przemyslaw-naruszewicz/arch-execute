@@ -1411,6 +1411,9 @@ window.studyUI = (() => {
           b.setAttribute("aria-selected", String(b === btn));
         });
         $$(".tab").forEach((t) => t.classList.toggle("active", t.id === "tab-" + btn.dataset.tab));
+        const title = $(".hero h1");
+        title.dataset.t = "hero.chapters." + btn.dataset.tab;
+        ui.setText(title, title.dataset.t);
       }),
   );
   renderPatterns();
@@ -2498,7 +2501,7 @@ final class OrderFulfillmentSaga
 
 // ===== Tab navigation, in-page links and keyboard support =====
 (() => {
-  const main = document.getElementById("learningContent");
+  const chapterHeader = document.querySelector(".hero");
   const topbar = document.querySelector(".topbar");
   const smooth = () => (matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth");
   // Tab semantics support screen readers and arrow-key navigation.
@@ -2521,7 +2524,7 @@ final class OrderFulfillmentSaga
       });
       // A chapter opens at its beginning, not at the scroll position left by the previous one.
       const covered = topbar ? Math.max(0, topbar.getBoundingClientRect().bottom) : 0;
-      if (main.getBoundingClientRect().top < covered) main.scrollIntoView({ behavior: "instant", block: "start" });
+      if (chapterHeader.getBoundingClientRect().top < covered) chapterHeader.scrollIntoView({ behavior: "instant", block: "start" });
     });
     tab.addEventListener("keydown", (e) => {
       const delta = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
@@ -2542,7 +2545,7 @@ final class OrderFulfillmentSaga
     e.preventDefault();
     if (!panel.classList.contains("active")) document.getElementById("chapter-" + panel.id.slice(4))?.click();
     if (target.tagName === "DETAILS") target.open = true;
-    target.scrollIntoView({ behavior: smooth(), block: "start" });
+    (target === panel ? chapterHeader : target).scrollIntoView({ behavior: smooth(), block: "start" });
   });
 })();
 

@@ -115,13 +115,27 @@ window.TEXTS = {
       en: 'Visualize architecture across space and time.',
       pl: 'Zobacz architekturę w przestrzeni i czasie.',
     },
-    fromPhpRequestsToSafe: {
-      en: 'Concurrency in a PHP application,<br>step by step',
-      pl: 'Współbieżność w aplikacji PHP<br>krok po kroku',
-    },
-    traceMultipleUsersThroughPhp: {
-      en: 'Five chapters on what happens on the server when many users use an application at once: PHP-FPM processes and CPU cores, database locks, event loops, and data consistency in DDD aggregates and Sagas. Basic PHP and SQL are enough to follow along.',
-      pl: 'Pięć rozdziałów o tym, co dzieje się na serwerze, gdy wielu użytkowników korzysta z aplikacji jednocześnie: procesy PHP-FPM i rdzenie CPU, blokady w bazie, pętle zdarzeń oraz spójność danych w agregatach DDD i Sagach. Wystarczy znajomość podstaw PHP i SQL.',
+    chapters: {
+      php: {
+        en: 'PHP execution: PHP-FPM processes and CPU cores',
+        pl: 'Wykonywanie PHP: procesy PHP-FPM i rdzenie CPU',
+      },
+      locks: {
+        en: 'Database locks: protecting data from concurrent changes',
+        pl: 'Blokady w bazie: ochrona danych przed równoczesnymi zmianami',
+      },
+      node: {
+        en: 'Event loops: handling multiple requests in ReactPHP and Node.js',
+        pl: 'Pętle zdarzeń: obsługa wielu żądań w ReactPHP i Node.js',
+      },
+      aggregate: {
+        en: 'Immediate consistency: DDD aggregate rules within one transaction',
+        pl: 'Spójność natychmiastowa: reguły agregatu DDD w jednej transakcji',
+      },
+      saga: {
+        en: 'Eventual consistency: service coordination and compensation in a Saga',
+        pl: 'Spójność ostateczna: współpraca usług i kompensacje w Sadze',
+      },
     },
   },
   tabs: {
@@ -2041,7 +2055,7 @@ window.TEXTS = {
       },
       problem: {
         en: 'A Symfony shop feels fast while only a few people use it. When a sale starts and six customers open the same page in the same second, some of them wait for a response even though the server’s CPU is almost idle. To see why, separate two questions: who <b>handles</b> a request (a PHP process) and who <b>executes</b> its code at a given moment (a CPU core).',
-        pl: 'Sklep na Symfony działa szybko, dopóki odwiedza go kilka osób. Gdy rusza promocja i sześciu klientów otwiera tę samą stronę w tej samej sekundzie, część z nich czeka na odpowiedź, choć procesor serwera prawie nic nie robi. Żeby zrozumieć dlaczego, rozdziel dwa pytania: kto <b>obsługuje</b> żądanie (proces PHP) i kto w danej chwili <b>wykonuje</b> jego kod (rdzeń CPU).',
+        pl: 'Sklep na Symfony działa szybko, dopóki odwiedza go kilka osób. Gdy rusza promocja i sześciu klientów otwiera tę samą stronę w tej samej sekundzie, część z nich czeka na odpowiedź, choć procesor serwera prawie nic nie robi. Żeby zrozumieć dlaczego, rozdziel dwa pytania: co <b>obsługuje</b> żądanie (proces PHP) i co w danej chwili <b>wykonuje</b> jego kod (rdzeń CPU).',
       },
       plan: {
         en: 'First you follow a request through Nginx and PHP-FPM. Then you run a simulation with several customers and see how one request shares a CPU with another. Finally you check how the same state looks in <code>htop</code> on a Linux server.',
