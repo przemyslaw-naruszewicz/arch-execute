@@ -367,8 +367,8 @@ window.TEXTS = {
   concept: {
     cpuSchedulingPhpFpm: { en: 'CPU scheduling · PHP-FPM', pl: 'Planowanie czasu CPU · PHP-FPM' },
     whoHoldsTheRequestAnd: {
-      en: 'Who holds the request, and who is running on the CPU?',
-      pl: 'Kto obsługuje żądanie, a kto wykonuje instrukcje?',
+      en: 'Which process handles the request, and which CPU core executes its code?',
+      pl: 'Który proces obsługuje żądanie, a który rdzeń CPU wykonuje jego kod?',
     },
     twoCustomersCallASymfony: {
       en: 'Two customers call a Symfony controller. An FPM worker keeps a request until it finishes; the operating system decides which process gets CPU time. Follow one tick at a time.',
@@ -566,8 +566,8 @@ window.TEXTS = {
       pl: '<b>4101</b> to sesja żądania A. Trzyma blokadę wiersza w otwartej transakcji i czeka na kolejne polecenie z PHP, stąd <code>idle in transaction</code>. <b>4102</b> to żądanie B: jego <code>SELECT … FOR UPDATE</code> czeka na blokadę (<code>Lock</code>), a <code>pg_blocking_pids</code> wskazuje sesję A. PostgreSQL oznacza czekanie na blokadę wiersza jako <code>transactionid</code>, bo B czeka na koniec transakcji A. Jeśli <code>idle in transaction</code> często trwa całe sekundy, aplikacja trzyma transakcje zbyt długo.',
     },
     pgOptimistic: {
-      en: 'In optimistic mode this query shows no waiting session. Nobody holds a lock, and the conflict appears only when the second <code>UPDATE</code> matches no row.',
-      pl: 'W trybie optymistycznym to zapytanie nie pokaże żadnej czekającej sesji. Nikt nie trzyma blokady, a konflikt wychodzi dopiero wtedy, gdy drugi <code>UPDATE</code> nie trafi w żaden wiersz.',
+      en: 'In optimistic mode this query shows no waiting session. Neither session locks the row during the initial read, and the conflict appears only when the second <code>UPDATE</code> matches no row.',
+      pl: 'W trybie optymistycznym to zapytanie nie pokaże żadnej czekającej sesji. Żadna z sesji nie blokuje wiersza podczas początkowego odczytu, a konflikt wychodzi dopiero wtedy, gdy drugi <code>UPDATE</code> nie trafi w żaden wiersz.',
     },
     raceSemantics: {
       en: 'The panel shows committed data (READ COMMITTED). W prepares a transaction’s write; U commits it and releases its row lock. In the other two traces each successful W commits a short transaction.',
@@ -647,8 +647,8 @@ window.TEXTS = {
         pl: 'Nic ich nie powstrzymuje: oba odczytują 100, a drugi zapis nadpisuje pierwszy. Klient kończy z saldem 120 zamiast 130.',
       },
       optimistic: {
-        en: 'Each save checks that nobody changed the row in the meantime. The late request notices the conflict, reads again and retries.',
-        pl: 'Każdy zapis sprawdza, czy nikt w międzyczasie nie zmienił wiersza. Spóźnione żądanie wykrywa konflikt, odczytuje dane ponownie i próbuje jeszcze raz.',
+        en: 'Each save checks whether another transaction changed the row in the meantime. The late request detects the conflict, reads again and retries.',
+        pl: 'Każdy zapis sprawdza, czy inna transakcja nie zmieniła w międzyczasie wiersza. Spóźnione żądanie wykrywa konflikt, odczytuje dane ponownie i próbuje jeszcze raz.',
       },
       pessimistic: {
         en: 'The first request locks the row. The second one waits for its turn and then reads the already updated balance.',
@@ -888,11 +888,11 @@ window.TEXTS = {
       unsafe: {
         en: [
           'No lock: every worker sends #101',
-          'A plain <code>SELECT</code> takes no row lock that would prevent competing claims. All three workers see #101 as pending and publish it before anyone marks it, so the warehouse could start packing the same order three times. Consumers can deduplicate by processed event ID, but the relay itself is still wrong.',
+          'A plain <code>SELECT</code> takes no row lock that would prevent competing claims. All three workers see #101 as pending and publish it before any worker marks it as published, so the warehouse could start packing the same order three times. Consumers can deduplicate by processed event ID, but the relay itself is still wrong.',
         ],
         pl: [
           'Bez blokady: każdy proces wysyła #101',
-          'Zwykły <code>SELECT</code> nie zakłada blokady wiersza, która powstrzymałaby konkurencyjny przydział. Wszystkie trzy procesy widzą #101 jako pending i publikują je, zanim ktokolwiek je oznaczy, więc magazyn mógłby zacząć pakować to samo zamówienie trzy razy. Konsumenci mogą deduplikować po ID przetworzonych zdarzeń, ale sam relay nadal działa błędnie.',
+          'Zwykły <code>SELECT</code> nie zakłada blokady wiersza, która powstrzymałaby konkurencyjny przydział. Wszystkie trzy procesy widzą #101 jako pending i publikują je, zanim którykolwiek z nich oznaczy je jako published, więc magazyn mógłby zacząć pakować to samo zamówienie trzy razy. Konsumenci mogą deduplikować po ID przetworzonych zdarzeń, ale sam relay nadal działa błędnie.',
         ],
       },
       wait: {
@@ -1506,7 +1506,7 @@ window.TEXTS = {
       pl: 'Każda usługa ma osobną transakcję. Koordynator wysyła polecenia i reaguje na zdarzenia, aż proces się powiedzie albo zostanie skompensowany.',
     },
     aggOver: { en: 'EXPERIMENT / ORDER AGGREGATE', pl: 'EKSPERYMENT / AGREGAT ORDER' },
-    aggTitle: { en: 'Who adds the final item to an Order?', pl: 'Kto doda ostatnią pozycję do zamówienia?' },
+    aggTitle: { en: 'Which request adds the final item to an Order?', pl: 'Które żądanie doda ostatnią pozycję do zamówienia?' },
     aggLead: {
       en: 'Order #42 has one item, and the shop allows at most two per order. The customer has the order open on a phone and on a laptop and clicks “Add item” on both at almost the same moment. Each click is a separate Symfony request that changes the same order.',
       pl: 'Zamówienie #42 ma jedną pozycję, a sklep pozwala na najwyżej dwie. Klient ma zamówienie otwarte na telefonie i na laptopie i niemal w tej samej chwili klika „Dodaj pozycję” na obu. Każde kliknięcie to osobne żądanie Symfony, które zmienia to samo zamówienie.',
@@ -2054,8 +2054,8 @@ window.TEXTS = {
         pl: 'Dlaczego klienci czekają, skoro procesor nic nie robi?',
       },
       problem: {
-        en: 'A Symfony shop feels fast while only a few people use it. When a sale starts and six customers open the same page in the same second, some of them wait for a response even though the server’s CPU is almost idle. To see why, separate two questions: who <b>handles</b> a request (a PHP process) and who <b>executes</b> its code at a given moment (a CPU core).',
-        pl: 'Sklep na Symfony działa szybko, dopóki odwiedza go kilka osób. Gdy rusza promocja i sześciu klientów otwiera tę samą stronę w tej samej sekundzie, część z nich czeka na odpowiedź, choć procesor serwera prawie nic nie robi. Żeby zrozumieć dlaczego, rozdziel dwa pytania: co <b>obsługuje</b> żądanie (proces PHP) i co w danej chwili <b>wykonuje</b> jego kod (rdzeń CPU).',
+        en: 'A Symfony shop feels fast while only a few people use it. When a sale starts and six customers open the same page in the same second, some of them wait for a response even though the server’s CPU is almost idle. To see why, separate two questions: which PHP process <b>handles</b> a request and which CPU core <b>executes</b> its code at a given moment.',
+        pl: 'Sklep na Symfony działa szybko, dopóki odwiedza go kilka osób. Gdy rusza promocja i sześciu klientów otwiera tę samą stronę w tej samej sekundzie, część z nich czeka na odpowiedź, choć procesor serwera prawie nic nie robi. Żeby zrozumieć dlaczego, rozdziel dwa pytania: który proces PHP <b>obsługuje</b> żądanie i który rdzeń CPU w danej chwili <b>wykonuje</b> jego kod.',
       },
       plan: {
         en: 'First you follow a request through Nginx and PHP-FPM. Then you run a simulation with several customers and see how one request shares a CPU with another. Finally you check how the same state looks in <code>htop</code> on a Linux server.',
@@ -2169,14 +2169,14 @@ window.TEXTS = {
       rules: {
         en: [
           'Read, compute in PHP and write are three separate steps. When two requests interleave them, one change can vanish without an error: a lost update.',
-          'Optimistic locking stops nobody. The conflict shows up at the write, and the application has to re-read the data and check its rules again.',
+          'Optimistic locking allows both requests to read and compute. The conflict shows up at the write, and the application has to re-read the data and check its rules again.',
           'Pessimistic locking (<code>SELECT … FOR UPDATE</code>) makes the second request wait until <code>COMMIT</code>. Keep such a transaction short and free of network calls.',
           'A simple increment fits in one atomic statement: <code>UPDATE … SET balance = balance + 10</code>.',
           'The transactional outbox saves the event in the same transaction as the data. Relays share the work with <code>FOR UPDATE SKIP LOCKED</code>, and the consumer still has to skip duplicates.',
         ],
         pl: [
           'Odczyt, obliczenie w PHP i zapis to trzy osobne kroki. Gdy dwa żądania je przeplotą, jedna zmiana może zniknąć bez błędu. To utracona aktualizacja.',
-          'Blokowanie optymistyczne nikogo nie zatrzymuje. Konflikt wychodzi przy zapisie, a aplikacja musi odczytać dane ponownie i jeszcze raz sprawdzić reguły.',
+          'Blokowanie optymistyczne pozwala obu żądaniom odczytać dane i obliczyć zmianę. Konflikt wychodzi przy zapisie, a aplikacja musi odczytać dane ponownie i jeszcze raz sprawdzić reguły.',
           'Blokowanie pesymistyczne (<code>SELECT … FOR UPDATE</code>) każe drugiemu żądaniu czekać do <code>COMMIT</code>. Taka transakcja powinna być krótka i bez wywołań sieciowych.',
           'Proste zwiększenie wartości zmieścisz w jednym atomowym zapytaniu: <code>UPDATE … SET balance = balance + 10</code>.',
           'Transactional outbox zapisuje zdarzenie w tej samej transakcji co dane. Procesy relay dzielą się pracą dzięki <code>FOR UPDATE SKIP LOCKED</code>, a odbiorca i tak musi pomijać duplikaty.',
