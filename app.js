@@ -456,12 +456,14 @@ window.studyUI = (() => {
     const playing = time >= 0 && time < cut;
     return `<div class="tile ${klass} ${!playing && time >= 0 ? "future" : ""} ${time === cut - 1 ? "playhead" : ""}" title="t=${time} ${esc(klass)} ${esc(val || "idle")}">${esc(val || "")}</div>`;
   }
-  function renderGantt(el, rows, total, now, groupAt = [], allowScrub = true) {
+  function renderGantt(el, rows, total, now, groupAt = [], allowScrub = true, boundaryClock = false) {
     const cols = Math.max(total, 1),
-      limit = Math.min(now, total);
+      // PHP metrics describe the interval starting at now; other experiments show the last elapsed interval.
+      limit = Math.min(boundaryClock && now > 0 ? now + 1 : now, total),
+      selected = boundaryClock ? now : now - 1;
     let html = `<div class="gantt-row" style="--cols:${cols}"><div class="gantt-label subhead">${ui.text("time")}</div>`;
     for (let t = 0; t < cols; t++)
-      html += `<div class="ruler-cell ${t === now - 1 ? "selected" : ""}" data-time="${t + 1}" role="button" tabindex="0" aria-label="${ui.text("showTime", { time: t + 1 })}">${t}</div>`;
+      html += `<div class="ruler-cell ${t === selected ? "selected" : ""}" data-time="${boundaryClock ? t : t + 1}" role="button" tabindex="0" aria-label="${ui.text("showTime", { time: boundaryClock ? t : t + 1 })}">${t}</div>`;
     html += "</div>";
     rows.forEach((r, i) => {
       if (groupAt.includes(i))
@@ -509,7 +511,7 @@ window.studyUI = (() => {
       })),
       ...requests.map((r) => ({
         label: label("user", { id: r.id }),
-        cells: r.states.map((s) => ({
+        cells: [...r.states, "done"].map((s) => ({
           id:
             s === "absent"
               ? ""
@@ -526,10 +528,11 @@ window.studyUI = (() => {
         })),
       })),
     ];
-    renderGantt($("#phpGantt"), rows, duration, state.phpTick, [
-      workerRows.length,
-      workerRows.length + coreRows.length,
-    ]);
+    // Include the final boundary: workers and cores are idle, and every request is done.
+    renderGantt(
+      $("#phpGantt"), rows, duration + 1, state.phpTick,
+      [workerRows.length, workerRows.length + coreRows.length], true, true,
+    );
     $("#phpTime").textContent = `t = ${state.phpTick} / ${duration}`;
     $("#phpBack").disabled = state.phpTick === 0;
     $("#phpNext").disabled = state.phpTick >= duration;

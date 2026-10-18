@@ -70,8 +70,8 @@ window.TEXTS = {
       pl: 'Kliknij Odtwórz, Dalej lub wybraną chwilę na osi czasu.',
     },
     boundaryDetail: {
-      en: 'State at t = {t}: {busy} occupied FPM workers, {cores} cores executing PHP. The highlighted column shows the elapsed interval [{previous}, {t}).',
-      pl: 'Stan w t = {t}: zajęte workery FPM: {busy}, rdzenie wykonujące PHP: {cores}. Wyróżniona kolumna pokazuje zakończony przedział [{previous}, {t}).',
+      en: 'State at t = {t}: {busy} occupied FPM workers, {cores} cores executing PHP. The highlighted column shows this state. The interval [{previous}, {t}) has ended.',
+      pl: 'Stan w t = {t}: zajęte workery FPM: {busy}, rdzenie wykonujące PHP: {cores}. Wyróżniona kolumna pokazuje ten sam stan. Przedział [{previous}, {t}) już się zakończył.',
     },
     ioTakeaway: {
       en: 'During synchronous I/O a PHP process holds its request, even when the CPU cores are free.',
@@ -302,8 +302,8 @@ window.TEXTS = {
       blocked: { en: 'php -S processes blocked on I/O: {n}', pl: 'Procesy php -S oczekujące na I/O: {n}' },
       processing: { en: 'The php -S process is handling a request', pl: 'Proces php -S obsługuje żądanie' },
       boundaryDetail: {
-        en: 'State at t = {t}: {busy} occupied php -S processes, {cores} cores executing PHP. The highlighted column shows the elapsed interval [{previous}, {t}).',
-        pl: 'Stan w t = {t}: zajęte procesy php -S: {busy}, rdzenie wykonujące PHP: {cores}. Wyróżniona kolumna pokazuje zakończony przedział [{previous}, {t}).',
+        en: 'State at t = {t}: {busy} occupied php -S processes, {cores} cores executing PHP. The highlighted column shows this state. The interval [{previous}, {t}) has ended.',
+        pl: 'Stan w t = {t}: zajęte procesy php -S: {busy}, rdzenie wykonujące PHP: {cores}. Wyróżniona kolumna pokazuje ten sam stan. Przedział [{previous}, {t}) już się zakończył.',
       },
       config: {
         en: '{env} · processes: {workers} · cores: {cores} · {load}',
