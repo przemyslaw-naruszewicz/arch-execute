@@ -5,6 +5,17 @@
 // Language state and text helpers shared by every module. All copy comes from texts.js (window.TEXTS).
 window.studyUI = (() => {
   const language = () => (document.querySelector('.langbtn[aria-pressed="true"]')?.dataset.lang === "pl" ? "pl" : "en");
+  const languageRenderers = [];
+  const onLanguageChange = (render) => languageRenderers.push(render);
+  function setLanguage(lang) {
+    if (!["en", "pl"].includes(lang) || lang === language()) return;
+    document.querySelectorAll(".langbtn").forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.lang === lang));
+    });
+    // Update the shared copy first, then each feature, in registration order, before the next paint.
+    applyTexts();
+    languageRenderers.forEach((render) => render());
+  }
   // Resolve { en, pl } pairs, at any depth, to the current language.
   const pick = (node, lang) => {
     if (Array.isArray(node)) return node.map((item) => pick(item, lang));
@@ -158,8 +169,13 @@ window.studyUI = (() => {
   const setCode = (el, source, lang = el?.dataset.code) => {
     if (el) el.innerHTML = highlightCode(source, lang);
   };
-  return { language, texts, text, setText, replaceHTML, followColumn, applyTexts, tipButton, setCode };
+  return {
+    language, setLanguage, onLanguageChange, texts, text, setText,
+    replaceHTML, followColumn, applyTexts, tipButton, setCode,
+  };
 })();
+// Populate shared copy before a feature renders its state-dependent labels.
+studyUI.applyTexts();
 
 // ===== Simulations: PHP-FPM requests, CPU scheduling, database race, runtime comparison =====
 (() => {
@@ -954,15 +970,6 @@ window.studyUI = (() => {
       renderPatterns();
     }
   });
-  document.addEventListener("click", (e) => {
-    if (e.target.closest(".langbtn")) {
-      renderPatterns();
-      updateControls();
-      renderPHP();
-      drawRace();
-      drawCompare();
-    }
-  });
   // Database race: timestamped, deterministic transaction operations. Each t is one logical step.
   const racePlans = {
     unsafe: [
@@ -1441,9 +1448,16 @@ window.studyUI = (() => {
   initRace();
   initCompare();
   recompute();
+  ui.onLanguageChange(() => {
+    renderPatterns();
+    updateControls();
+    renderPHP();
+    drawRace();
+    drawCompare();
+  });
 })();
 
-// ===== Glossary tooltips, code examples and the language switch =====
+// ===== Glossary tooltips and code examples =====
 (() => {
   "use strict";
   const $ = (sel) => document.querySelector(sel);
@@ -1655,18 +1669,10 @@ $em->wrapInTransaction(function ($tx) : void {
       ui.setText($("#copyCode"), "code.copy");
     }, 1200);
   });
-  $$(".langbtn").forEach((btn) =>
-    btn.addEventListener("click", () => {
-      $$(".langbtn").forEach((b) => {
-        const active = b.dataset.lang === btn.dataset.lang;
-        b.setAttribute("aria-pressed", String(active));
-      });
-      closeTip();
-      ui.applyTexts();
-      renderCode();
-    }),
-  );
-  ui.applyTexts();
+  ui.onLanguageChange(() => {
+    closeTip();
+    renderCode();
+  });
   renderCode();
 })();
 
@@ -1697,7 +1703,7 @@ $em->wrapInTransaction(function ($tx) : void {
         .querySelectorAll("[data-" + key.replace(/[A-Z]/g, (c) => "-" + c.toLowerCase()) + "]")
         .forEach((el) => (el.innerHTML = build(ui.texts(el.dataset[key]))));
   }
-  document.querySelectorAll(".langbtn").forEach((b) => b.addEventListener("click", render));
+  ui.onLanguageChange(render);
   render();
 })();
 
@@ -2507,7 +2513,7 @@ final class OrderFulfillmentSaga
   studyUI.setCode($("#aggDbSql"), aggDbSql);
   studyUI.setCode($("#aggDbPhp"), aggDbPhp);
   studyUI.setCode($("#sagaCode"), sagaCode);
-  document.querySelectorAll(".langbtn").forEach((b) => b.addEventListener("click", renderI18n));
+  studyUI.onLanguageChange(renderI18n);
   document.querySelectorAll("[data-tab]").forEach((b) =>
     b.addEventListener("click", () => {
       stop(a);
@@ -2691,8 +2697,9 @@ final class OrderFulfillmentSaga
     });
     watch.forEach((el) => el && observer.observe(el, { subtree: true, childList: true, characterData: true }));
     document
-      .querySelectorAll(".langbtn,.tabbtn," + refreshOn)
-      .forEach((b) => b.addEventListener("click", () => requestAnimationFrame(refresh)));
+      .querySelectorAll(".tabbtn," + refreshOn)
+      .forEach((b) => b.addEventListener("click", refresh));
+    studyUI.onLanguageChange(refresh);
     update();
     docks.push(maybeShow);
   }
@@ -3053,12 +3060,7 @@ ORDER BY id LIMIT 1;
     state.step = 0;
     render();
   });
-  document.querySelectorAll(".langbtn").forEach((b) =>
-    b.addEventListener("click", () => {
-      queueMicrotask(render);
-      setTimeout(render, 50);
-    }),
-  );
+  studyUI.onLanguageChange(render);
   document.querySelectorAll(".tabbtn").forEach((b) =>
     b.addEventListener("click", () => {
       stop();
@@ -3196,7 +3198,7 @@ ORDER BY id LIMIT 1;
     open.el.style.left = Math.max(0, Math.min(box.left, innerWidth - box.width)) + "px";
     open.el.style.top = Math.max(0, Math.min(box.top, innerHeight - 40)) + "px";
   });
-  document.querySelectorAll(".langbtn").forEach((button) => button.addEventListener("click", () => queueMicrotask(localize)));
+  ui.onLanguageChange(localize);
   localize();
 })();
 
@@ -3221,8 +3223,15 @@ ORDER BY id LIMIT 1;
       button.removeAttribute("title");
     });
   }
-  document
-    .querySelectorAll(".langbtn")
-    .forEach((button) => button.addEventListener("click", () => queueMicrotask(localizeLabels)));
+  ui.onLanguageChange(localizeLabels);
   localizeLabels();
+})();
+
+// ===== Application startup =====
+// Features above register their renderers; only this section connects the language controls and reveals the page.
+(() => {
+  document.querySelectorAll(".langbtn").forEach((button) => {
+    button.addEventListener("click", () => studyUI.setLanguage(button.dataset.lang));
+  });
+  window.studyStartup?.ready();
 })();

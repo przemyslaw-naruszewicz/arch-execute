@@ -730,6 +730,10 @@ html {
   scroll-behavior: smooth;
   scroll-padding-top: calc(var(--topbar-h) + 16px);
 }
+/* Keep layout and font loading active while the first view is being prepared. */
+html.is-starting body {
+  visibility: hidden;
+}
 body {
   margin: 0;
   background: var(--canvas);

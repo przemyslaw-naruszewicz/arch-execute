@@ -8,7 +8,12 @@
 <link rel="icon" href="favicon-32.png" sizes="32x32">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="styles.css">
+<link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="styles.css?v=d6b834ce36a0">
+<script src="startup.js?v=1961c0a5e3a3"></script>
+<script defer src="texts.js?v=4c217d6c2747"></script>
+<script defer src="app.js?v=8a5b088d4428"></script>
 </head>
 <body>
 <!-- Texts are not written here: elements with data-t / data-t-html get their copy from texts.js. -->
@@ -798,7 +803,5 @@ ROLLBACK</pre></figure>
 </div>
 
 <div aria-live="polite" class="floating-tip" hidden="" id="floatingTip" role="tooltip"></div>
-<script src="texts.js?v=4c217d6c2747"></script>
-<script src="app.js?v=63355da92db8"></script>
 </body>
 </html>
